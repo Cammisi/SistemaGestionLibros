@@ -10,9 +10,9 @@ on:
 # Necesario para que el bot pueda commitear los badges y comentar en el PR
 permissions:
   contents: write      # Para subir los badges (.svg)
-  pull-requests: write # Para comentar el reporte en el PR
   checks: write        # Para anotar los resultados del test
-
+  pull-requests: write # Para comentar el reporte en el PR
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -77,23 +77,27 @@ jobs:
           echo "✅ Branches: ${{ steps.jacoco.outputs.branches }}%"
 
       # --- COMMIT AUTO DE BADGES ---
+# --- COMMIT AUTO DE BADGES (VERSIÓN NUCLEAR) ---
       - name: Commit coverage badges
-        # Solo corre en push a main (no en PRs para no ensuciar ramas de features)
+        # Solo corre en push a main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          # Configuramos el bot
+          # 1. Configurar identidad del bot
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # Forzamos añadir los badges (por si acaso estuvieran ignorados)
+          # 2. (TRUCO SENIOR) Forzar la autenticación inyectando el token en la URL
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          
+          # 3. Agregar archivos
           git add .github/badges/*.svg
           
-          # Verificamos si hay cambios antes de commitear para no romper el build
+          # 4. Verificar cambios y subir
           if git diff --staged --quiet; then
             echo "No changes in coverage badges."
           else
             git commit -m "chore: update coverage badges [skip ci]"
-            git push
+            git push origin HEAD:main
           fi
 
       # --- ARTEFACTOS Y REPORTES ---
