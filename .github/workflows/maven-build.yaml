@@ -1,0 +1,116 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+
+# Necesario para que el bot pueda commitear los badges y comentar en el PR
+permissions:
+  contents: write      # Para subir los badges (.svg)
+  pull-requests: write # Para comentar el reporte en el PR
+  checks: write        # Para anotar los resultados del test
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./gestion-cliente
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: admin_libros
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          POSTGRES_DB: libreria_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Importante: Buscar todo el historial para asegurar comparaciones correctas
+          # y evitar problemas al hacer push de vuelta
+          fetch-depth: 0 
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: ./gestion-cliente/pom.xml
+
+      - name: Run tests with coverage
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/libreria_db
+          SPRING_DATASOURCE_USERNAME: admin_libros
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+        run: ./mvnw -B verify
+
+      # --- GENERACIÓN DE BADGES ---
+      - name: Generate coverage badges
+        id: jacoco
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          badges-directory: .github/badges
+          generate-branches-badge: true
+          generate-summary: true
+          jacoco-csv-file: gestion-cliente/target/site/jacoco/jacoco.csv
+          fail-if-coverage-less-than: 80
+          fail-if-branches-less-than: 70
+
+      - name: Log coverage percentage
+        run: |
+          echo "✅ Coverage: ${{ steps.jacoco.outputs.coverage }}%"
+          echo "✅ Branches: ${{ steps.jacoco.outputs.branches }}%"
+
+      # --- COMMIT AUTO DE BADGES ---
+      - name: Commit coverage badges
+        # Solo corre en push a main (no en PRs para no ensuciar ramas de features)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Configuramos el bot
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Forzamos añadir los badges (por si acaso estuvieran ignorados)
+          git add .github/badges/*.svg
+          
+          # Verificamos si hay cambios antes de commitear para no romper el build
+          if git diff --staged --quiet; then
+            echo "No changes in coverage badges."
+          else
+            git commit -m "chore: update coverage badges [skip ci]"
+            git push
+          fi
+
+      # --- ARTEFACTOS Y REPORTES ---
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        if: always() # Subir reporte aunque fallen los tests para ver por qué
+        with:
+          name: jacoco-report
+          path: gestion-cliente/target/site/jacoco/
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: gestion-cliente/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 80
+          title: "Reporte de Cobertura de Código"

@@ -1,0 +1,76 @@
+# ==================================
+# 1. MAVEN & BUILD 
+# ==================================
+target/
+build/
+bin/
+out/
+dependency-reduced-pom.xml
+
+# --- MAVEN WRAPPER (SE VERSIONA) ---
+# .mvn/wrapper/maven-wrapper.jar
+
+# ==================================
+# 2. IDEs 
+# ==================================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# ==================================
+# 3. DOCUMENTOS Y BINARIOS
+# ==================================
+# Ignorar PDFs (Diagrama de tablas)
+*.pdf
+# Ignorar temporales de Office
+~$*.doc*
+~$*.xls*
+
+# ==================================
+# 4. SISTEMA OPERATIVO
+# ==================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================================
+# 5. DOCKER & SECRETOS 
+# ==================================
+docker-compose.override.yml
+.env
+.env.*
+!.env.example
+secrets.yml
+*.pem
+*.key
+
+# ==================================
+# 6. LOGS
+# ==================================
+*.log
+logs/
+
+# ==================================
+# 7. SQL & BASE DE DATOS
+# ==================================
+**/dumps/*.sql
+**/test-data/*.sql
+*.sql
+
+# EXCEPCIONES (!): 
+!init.sql
+!src/main/resources/db/migration/*.sql
+
+
+
+
