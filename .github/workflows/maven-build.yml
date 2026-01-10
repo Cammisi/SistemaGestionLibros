@@ -6,13 +6,11 @@ on:
   pull_request:
     branches: [ "main", "develop" ]
 
-
-# Necesario para que el bot pueda commitear los badges y comentar en el PR
 permissions:
-  contents: write      # Para subir los badges (.svg)
-  checks: write        # Para anotar los resultados del test
-  pull-requests: write # Para comentar el reporte en el PR
- 
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,9 +38,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Importante: Buscar todo el historial para asegurar comparaciones correctas
-          # y evitar problemas al hacer push de vuelta
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -59,7 +55,6 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
         run: ./mvnw -B verify
 
-      # --- GENERACIÓN DE BADGES ---
       - name: Generate coverage badges
         id: jacoco
         uses: cicirello/jacoco-badge-generator@v2
@@ -68,42 +63,28 @@ jobs:
           generate-branches-badge: true
           generate-summary: true
           jacoco-csv-file: gestion-cliente/target/site/jacoco/jacoco.csv
-          fail-if-coverage-less-than: 0  #80
-          fail-if-branches-less-than: 0  #70
+          fail-if-coverage-less-than: 0
+          fail-if-branches-less-than: 0
 
       - name: Log coverage percentage
         run: |
           echo "✅ Coverage: ${{ steps.jacoco.outputs.coverage }}%"
           echo "✅ Branches: ${{ steps.jacoco.outputs.branches }}%"
 
-      # --- COMMIT AUTO DE BADGES ---
-# --- COMMIT AUTO DE BADGES (VERSIÓN NUCLEAR) ---
+      # --- AQUÍ ESTÁ EL CAMBIO ---
       - name: Commit coverage badges
-        # Solo corre en push a main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          # 1. Configurar identidad del bot
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # 2. (TRUCO SENIOR) Forzar la autenticación inyectando el token en la URL
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          
-          # 3. Agregar archivos
-          git add .github/badges/*.svg
-          
-          # 4. Verificar cambios y subir
-          if git diff --staged --quiet; then
-            echo "No changes in coverage badges."
-          else
-            git commit -m "chore: update coverage badges [skip ci]"
-            git push origin HEAD:main
-          fi
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update coverage badges [skip ci]"
+          file_pattern: .github/badges/*.svg
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
 
-      # --- ARTEFACTOS Y REPORTES ---
       - name: Upload JaCoCo report
         uses: actions/upload-artifact@v4
-        if: always() # Subir reporte aunque fallen los tests para ver por qué
+        if: always()
         with:
           name: jacoco-report
           path: gestion-cliente/target/site/jacoco/
@@ -115,6 +96,6 @@ jobs:
         with:
           paths: gestion-cliente/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 0 #80
-          min-coverage-changed-files: 0 #80
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
           title: "Reporte de Cobertura de Código"
