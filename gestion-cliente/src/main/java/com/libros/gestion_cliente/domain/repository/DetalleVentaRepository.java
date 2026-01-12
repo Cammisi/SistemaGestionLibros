@@ -8,7 +8,5 @@ public interface DetalleVentaRepository {
     DetalleVenta save(DetalleVenta detalleVenta);
     Optional<DetalleVenta> findById(Long id);
     List<DetalleVenta> findAll();
-
-    // Método clave para reportes: Ver qué ventas incluyen este libro
     List<DetalleVenta> findByLibroId(Long libroId);
 }

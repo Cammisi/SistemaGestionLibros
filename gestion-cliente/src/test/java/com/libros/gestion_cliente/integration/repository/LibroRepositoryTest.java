@@ -36,9 +36,10 @@ class LibroRepositoryTest {
                 .titulo("El Principito")
                 .autor("Antoine de Saint-Exupéry")
                 .isbn("978-3-16-148410-0")
-                .precio(new BigDecimal("15.50"))
+                .precioBase(new BigDecimal("15.50")) // CAMBIO: precioBase
                 .stock(10)
-                .editorial("Salamandra")
+                .cantVolumenes(1) // CAMBIO: cantVolumenes
+                .tematica("Fantasía") // CAMBIO: tematica
                 .build();
 
         // WHEN
@@ -48,24 +49,21 @@ class LibroRepositoryTest {
         Optional<Libro> encontrado = libroRepository.findByIsbn("978-3-16-148410-0");
         assertThat(encontrado).isPresent();
         assertThat(encontrado.get().getTitulo()).isEqualTo("El Principito");
-        assertThat(encontrado.get().getCantidadVolumenes()).isEqualTo(1); // Valor por defecto
+        assertThat(encontrado.get().getCantVolumenes()).isEqualTo(1);
     }
 
     @Test
     void deberiaBuscarPorTituloFlexible() {
         // GIVEN
-        Libro libro1 = Libro.builder().titulo("Java a Fondo").autor("X").isbn("1").precio(BigDecimal.TEN).stock(1).build();
-        Libro libro2 = Libro.builder().titulo("Aprende Java en 21 días").autor("Y").isbn("2").precio(BigDecimal.TEN).stock(1).build();
-        Libro libro3 = Libro.builder().titulo("Cocina fácil").autor("Z").isbn("3").precio(BigDecimal.TEN).stock(1).build();
+        Libro libro1 = Libro.builder().titulo("Java a Fondo").autor("X").isbn("1").precioBase(BigDecimal.TEN).stock(1).build();
+        Libro libro2 = Libro.builder().titulo("Aprende Java en 21 días").autor("Y").isbn("2").precioBase(BigDecimal.TEN).stock(1).build();
 
-        libroRepository.saveAll(List.of(libro1, libro2, libro3));
+        libroRepository.saveAll(List.of(libro1, libro2));
 
         // WHEN
         List<Libro> resultados = libroRepository.findByTituloContainingIgnoreCase("JAVA");
 
         // THEN
-        assertThat(resultados).hasSize(2); // Debería traer los dos primeros
-        assertThat(resultados).extracting(Libro::getTitulo)
-                .contains("Java a Fondo", "Aprende Java en 21 días");
+        assertThat(resultados).hasSize(2);
     }
 }

@@ -6,13 +6,10 @@ import java.util.Optional;
 
 public interface VentaRepository {
     Venta save(Venta venta);
-
-    // Firma genérica para evitar el conflicto con JPA
     <S extends Venta> List<S> saveAll(Iterable<S> ventas);
-
     Optional<Venta> findById(Long id);
     List<Venta> findAll();
 
-    // Búsqueda clave por número de factura
-    Optional<Venta> findByNroFactura(Integer nroFactura);
+    // CAMBIO: Recibe String porque nro_factura es VARCHAR
+    Optional<Venta> findByNroFactura(String nroFactura);
 }

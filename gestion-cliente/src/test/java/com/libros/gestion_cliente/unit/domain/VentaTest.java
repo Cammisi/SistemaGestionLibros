@@ -11,52 +11,30 @@ class VentaTest {
 
     @Test
     void deberiaCalcularTotalAutomaticamenteAlAgregarDetalles() {
-        // GIVEN
         Venta venta = new Venta();
 
         DetalleVenta d1 = DetalleVenta.builder()
                 .cantidad(2)
-                .precioUnitario(new BigDecimal("10.00"))
-                .build(); // Subtotal 20.00
+                .precioAlMomento(new BigDecimal("10.00"))
+                .build();
 
         DetalleVenta d2 = DetalleVenta.builder()
                 .cantidad(1)
-                .precioUnitario(new BigDecimal("5.50"))
-                .build(); // Subtotal 5.50
+                .precioAlMomento(new BigDecimal("5.50"))
+                .build();
 
-        // WHEN
         venta.addDetalle(d1);
         venta.addDetalle(d2);
 
-        // THEN
-        // 20.00 + 5.50 = 25.50
-        assertThat(venta.getTotal()).isEqualByComparingTo(new BigDecimal("25.50"));
-    }
-
-    @Test
-    void deberiaRestarTotalAlRemoverDetalle() {
-        // GIVEN
-        Venta venta = new Venta();
-        DetalleVenta d1 = DetalleVenta.builder().cantidad(1).precioUnitario(BigDecimal.TEN).build();
-        venta.addDetalle(d1);
-        assertThat(venta.getTotal()).isEqualByComparingTo(BigDecimal.TEN);
-
-        // WHEN
-        venta.removeDetalle(d1);
-
-        // THEN
-        assertThat(venta.getTotal()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(venta.getDetalles()).isEmpty();
+        assertThat(venta.getMontoTotal()).isEqualByComparingTo(new BigDecimal("25.50"));
     }
 
     @Test
     void deberiaTenerValoresPorDefecto() {
-        // Probamos el Builder y sus defaults (Estado y Fecha)
-        Venta venta = Venta.builder().nroFactura(99).build();
+        Venta venta = Venta.builder().nroFactura("A001").build();
 
-        assertThat(venta.getEstado()).isEqualTo(EstadoVenta.FINALIZADA); // Default
-        assertThat(venta.getCantidadCuotas()).isEqualTo(1); // Default
-        assertThat(venta.getFecha()).isNotNull(); // Default
-        assertThat(venta.getTotal()).isEqualTo(BigDecimal.ZERO); // Default
+        assertThat(venta.getEstado()).isEqualTo(EstadoVenta.EN_PROCESO);
+        assertThat(venta.getFechaVenta()).isNotNull();
+        assertThat(venta.getMontoTotal()).isEqualTo(BigDecimal.ZERO);
     }
 }

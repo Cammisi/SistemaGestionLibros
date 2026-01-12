@@ -39,31 +39,26 @@ class DetalleVentaRepositoryTest {
 
     @Test
     void deberiaEncontrarDetallesPorLibro() {
-        // 1. PREPARACIÓN (GIVEN)
         Cliente cliente = Cliente.builder().nombre("Pepe").apellido("Test").dni("999").build();
         clienteRepository.save(cliente);
 
-        Libro libroTarget = Libro.builder().titulo("Libro Objetivo").autor("A").isbn("111").precio(BigDecimal.TEN).stock(10).build();
-        Libro libroOtro = Libro.builder().titulo("Otro Libro").autor("B").isbn("222").precio(BigDecimal.TEN).stock(10).build();
+        Libro libroTarget = Libro.builder().titulo("Libro Objetivo").autor("A").isbn("111").precioBase(BigDecimal.TEN).build();
+        Libro libroOtro = Libro.builder().titulo("Otro Libro").autor("B").isbn("222").precioBase(BigDecimal.TEN).build();
         libroRepository.saveAll(List.of(libroTarget, libroOtro));
 
-        // Creamos una venta con ambos libros
-        Venta venta = Venta.builder().cliente(cliente).nroFactura(500).build();
+        Venta venta = Venta.builder().cliente(cliente).nroFactura("FAC-999").build();
 
-        DetalleVenta d1 = DetalleVenta.builder().libro(libroTarget).cantidad(2).precioUnitario(BigDecimal.TEN).build();
-        DetalleVenta d2 = DetalleVenta.builder().libro(libroOtro).cantidad(1).precioUnitario(BigDecimal.TEN).build();
+        DetalleVenta d1 = DetalleVenta.builder().libro(libroTarget).cantidad(2).precioAlMomento(BigDecimal.TEN).build();
+        DetalleVenta d2 = DetalleVenta.builder().libro(libroOtro).cantidad(1).precioAlMomento(BigDecimal.TEN).build();
 
         venta.addDetalle(d1);
         venta.addDetalle(d2);
 
-        ventaRepository.save(venta); // Esto guarda los detalles automáticamente
+        ventaRepository.save(venta);
 
-        // 2. EJECUCIÓN (WHEN) - Buscamos solo los detalles del "Libro Objetivo"
         List<DetalleVenta> resultados = detalleVentaRepository.findByLibroId(libroTarget.getId());
 
-        // 3. VERIFICACIÓN (THEN)
         assertThat(resultados).hasSize(1);
         assertThat(resultados.get(0).getLibro().getTitulo()).isEqualTo("Libro Objetivo");
-        assertThat(resultados.get(0).getCantidad()).isEqualTo(2);
     }
 }

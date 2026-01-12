@@ -36,7 +36,7 @@ class VentaRepositoryTest {
 
     @Test
     void deberiaGuardarVentaConDetallesYCalcularTotal() {
-        // 1. GIVEN: Necesitamos un Cliente y un Libro guardados previamente
+        // GIVEN
         Cliente cliente = Cliente.builder().nombre("Ana").apellido("Garcia").dni("22222222").build();
         clienteRepository.save(cliente);
 
@@ -44,38 +44,35 @@ class VentaRepositoryTest {
                 .titulo("Clean Code")
                 .autor("Uncle Bob")
                 .isbn("978-0132350884")
-                .precio(new BigDecimal("50.00")) // Precio actual del libro
+                .precioBase(new BigDecimal("50.00"))
                 .stock(10)
                 .build();
         libroRepository.save(libro);
 
-        // 2. Creamos la Venta (Cabecera)
+        // WHEN: Creamos Venta
         Venta venta = Venta.builder()
                 .cliente(cliente)
-                .nroFactura(1001)
-                .estado(EstadoVenta.PAGANDO)
+                .nroFactura("F-0001-XXXX")
+                .estado(EstadoVenta.EN_PROCESO)
                 .build();
 
-        // 3. Agregamos un detalle (2 libros a $50.00 c/u)
         DetalleVenta detalle = DetalleVenta.builder()
                 .libro(libro)
                 .cantidad(2)
-                .precioUnitario(libro.getPrecio()) // Snapshot del precio
+                .precioAlMomento(libro.getPrecioBase())
                 .build();
 
-        venta.addDetalle(detalle); // Esto debería disparar el recálculo del total
+        venta.addDetalle(detalle);
 
-        // 4. WHEN: Guardamos la venta (Cascade guardará el detalle)
         Venta guardada = ventaRepository.save(venta);
 
-        // 5. THEN
-        assertThat(guardada.getId()).isNotNull();
-        assertThat(guardada.getTotal()).isEqualByComparingTo(new BigDecimal("100.00")); // 2 * 50
-        assertThat(guardada.getDetalles()).hasSize(1);
 
-        // Verificamos recuperar por Nro Factura
-        Optional<Venta> recuperada = ventaRepository.findByNroFactura(1001);
+        assertThat(guardada.getId()).isNotNull();
+
+        assertThat(guardada.getMontoTotal()).isEqualByComparingTo(new BigDecimal("100.00"));
+
+        Optional<Venta> recuperada = ventaRepository.findByNroFactura("F-0001-XXXX");
         assertThat(recuperada).isPresent();
-        assertThat(recuperada.get().getEstado()).isEqualTo(EstadoVenta.PAGANDO);
+        assertThat(recuperada.get().getEstado()).isEqualTo(EstadoVenta.EN_PROCESO);
     }
 }

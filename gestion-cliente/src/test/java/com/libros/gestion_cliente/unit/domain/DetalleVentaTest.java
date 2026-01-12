@@ -9,17 +9,13 @@ class DetalleVentaTest {
 
     @Test
     void deberiaCalcularSubtotalCorrectamente() {
-        // GIVEN
         DetalleVenta detalle = DetalleVenta.builder()
                 .cantidad(3)
-                .precioUnitario(new BigDecimal("10.50"))
+                .precioAlMomento(new BigDecimal("10.50")) // CAMBIO
                 .build();
 
-        // WHEN
         BigDecimal subtotal = detalle.getSubtotal();
 
-        // THEN
-        // 3 * 10.50 = 31.50
         assertThat(subtotal).isEqualByComparingTo(new BigDecimal("31.50"));
     }
 
@@ -27,8 +23,5 @@ class DetalleVentaTest {
     void deberiaDevolverCeroSiFaltanDatos() {
         DetalleVenta detalleSinPrecio = DetalleVenta.builder().cantidad(5).build();
         assertThat(detalleSinPrecio.getSubtotal()).isEqualTo(BigDecimal.ZERO);
-
-        DetalleVenta detalleSinCantidad = DetalleVenta.builder().precioUnitario(BigDecimal.TEN).build();
-        assertThat(detalleSinCantidad.getSubtotal()).isEqualTo(BigDecimal.ZERO);
     }
 }

@@ -59,7 +59,8 @@ CREATE TABLE detalle_ventas (
     id SERIAL PRIMARY KEY,
     venta_id INT REFERENCES ventas(id),
     libro_id INT REFERENCES libros(id),
-    precio_al_momento DECIMAL(10, 2)
+    precio_al_momento DECIMAL(10, 2),
+    cantidad INT DEFAULT 1
 );
 
 -- Tabla de Cuotas

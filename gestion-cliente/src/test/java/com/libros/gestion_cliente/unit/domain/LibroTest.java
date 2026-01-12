@@ -13,20 +13,13 @@ class LibroTest {
         Libro libro = Libro.builder()
                 .titulo("Test")
                 .isbn("123")
-                .precio(new BigDecimal("100.00"))
+                .precioBase(new BigDecimal("100.00")) // CAMBIO
                 .stock(5)
                 .build();
 
         // THEN
-        assertThat(libro.getCantidadVolumenes()).isEqualTo(1); // Default verificado
+        assertThat(libro.getCantVolumenes()).isEqualTo(1); // Default
         assertThat(libro.getTitulo()).isEqualTo("Test");
-        assertThat(libro.getPrecio()).isEqualTo(new BigDecimal("100.00"));
-    }
-
-    @Test
-    void deberiaActualizarStock() {
-        Libro libro = new Libro();
-        libro.setStock(10);
-        assertThat(libro.getStock()).isEqualTo(10);
+        assertThat(libro.getPrecioBase()).isEqualTo(new BigDecimal("100.00"));
     }
 }

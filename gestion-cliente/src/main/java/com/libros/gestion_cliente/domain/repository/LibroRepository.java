@@ -13,6 +13,5 @@ public interface LibroRepository {
     void deleteById(Long id);
     boolean existsByIsbn(String isbn);
 
-    // Búsqueda flexible para el mostrador (ej: buscar "Quijote" y que traiga "Don Quijote")
     List<Libro> findByTituloContainingIgnoreCase(String titulo);
 }

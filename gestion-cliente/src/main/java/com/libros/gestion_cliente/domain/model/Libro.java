@@ -18,42 +18,33 @@ public class Libro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "El título es obligatorio")
-    @Column(nullable = false)
-    private String titulo;
-
-    @NotBlank(message = "El autor es obligatorio")
-    @Column(nullable = false)
-    private String autor;
-
     @NotBlank(message = "El ISBN es obligatorio")
     @Column(unique = true, nullable = false, length = 20)
     private String isbn;
 
-    // Lo dejamos opcional (sin @NotBlank) por si decides no usarlo
-    private String editorial;
+    @NotBlank(message = "El título es obligatorio")
+    @Column(nullable = false, length = 150)
+    private String titulo;
 
-    // NUEVO CAMPO: Cantidad de volúmenes que componen este ítem
-    @NotNull(message = "La cantidad de volúmenes es obligatoria")
-    @Min(value = 1, message = "Debe tener al menos 1 volumen")
-    @Column(name = "cantidad_volumenes", nullable = false)
-    @Builder.Default // Por defecto es 1 si no se especifica
-    private Integer cantidadVolumenes = 1;
+    @Column(length = 100)
+    private String autor;
 
-    // IMPORTANTE: BigDecimal para el precio
-    @NotNull(message = "El precio es obligatorio")
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0")
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal precio;
+    @Column(name = "tematica", length = 100)
+    private String tematica;
 
-    // Stock de inventario (cuántas copias físicas tienes para vender)
-    @NotNull(message = "El stock es obligatorio")
-    @Min(value = 0, message = "El stock no puede ser negativo")
-    @Column(nullable = false)
-    private Integer stock;
+    // SQL: cant_volumenes INT DEFAULT 1
+    @Column(name = "cant_volumenes")
+    @Builder.Default
+    private Integer cantVolumenes = 1;
 
-    @Column(columnDefinition = "TEXT")
-    private String descripcion;
+    @NotNull
+    @DecimalMin("0.01")
+    @Column(name = "precio_base", precision = 10, scale = 2)
+    private BigDecimal precioBase; // Antes precio
 
-    private String genero;
+    // SQL: stock INT DEFAULT 0
+    @Min(0)
+    @Builder.Default
+    private Integer stock = 0;
+
 }
