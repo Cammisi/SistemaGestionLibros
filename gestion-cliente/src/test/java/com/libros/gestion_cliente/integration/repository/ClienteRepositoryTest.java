@@ -24,7 +24,8 @@ class ClienteRepositoryTest {
     // Definimos el contenedor de Postgres para el test
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withInitScript("init.sql");
 
     @Autowired
     private ClienteRepository clienteRepository;
