@@ -26,7 +26,8 @@ class PedidoEspecialRepositoryTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withInitScript("init.sql");
+            .withInitScript("init.sql")
+            .withUrlParam("stringtype", "unspecified");
 
     @Autowired private PedidoEspecialRepository pedidoRepository;
     @Autowired private ClienteRepository clienteRepository;
