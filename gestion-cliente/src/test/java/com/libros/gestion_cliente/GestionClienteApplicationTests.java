@@ -7,12 +7,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
+
 @SpringBootTest
 @Testcontainers
 class GestionClienteApplicationTests {
 
-    // Necesitamos levantar Postgres también aquí, porque al hacer @SpringBootTest
-    // Spring intenta levantar TODO el sistema (incluida la conexión a BD).
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
@@ -21,18 +21,15 @@ class GestionClienteApplicationTests {
 
     @Test
     void contextLoads() {
-        // Este test vacío es PODEROSO.
-        // Verifica que Spring puede arrancar, crear todos los beans y conectarse a la BD.
-        // Además, cubre la clase GestionClienteApplication.
+        // Verifica que el contexto de Spring levante sin errores
     }
 
     @Test
     void verificarMetodoMain() {
-        // Un pequeño truco para asegurar que la línea del "main" también cuenta en el coverage
-        try {
-            GestionClienteApplication.main(new String[] {});
-        } catch (Exception e) {
-            // Ignoramos errores de puerto ocupado, solo queremos ejecutar las líneas
-        }
+        // Este test invoca el método main para cubrir esas líneas en JaCoCo
+        // Usamos assertThatCode para asegurar que no lance excepciones (Smoke Test)
+        assertThatCode(() ->
+                GestionClienteApplication.main(new String[]{})
+        ).doesNotThrowAnyException();
     }
 }
