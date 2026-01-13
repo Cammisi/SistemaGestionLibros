@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CoverageBoosterTest {
 
-    // --- 1. TEST DE ENUMS (EXHAUSTIVO) ---
     @Test
     void testearTodosLosEnums() {
         for (EstadoVenta e : EstadoVenta.values()) {
@@ -23,7 +22,6 @@ class CoverageBoosterTest {
         }
     }
 
-    // --- 2. TEST DE RAMAS LÓGICAS (DETALLE VENTA) ---
     @Test
     void testearRamasComplejas() {
         DetalleVenta d1 = new DetalleVenta();
@@ -40,46 +38,41 @@ class CoverageBoosterTest {
         assertThat(d4.getSubtotal()).isEqualByComparingTo(new BigDecimal("20.00"));
     }
 
-    // --- 3. TEST DE POJOs (ENTIDADES) ---
-    // Probamos Getters, Setters, Equals y HashCode
     @Test
     void testearEntidadesCompletas() {
         testearClaseCliente();
         testearClaseFamiliar();
         testearClaseLibro();
-        testearClaseVentaCompleta(); // <--- Aquí reforzamos Venta
+        testearClaseVentaManual(); // <--- Aquí recuperamos el % de Venta
         testearClaseDetalleVenta();
         testearClaseCuota();
         testearClasePedidoEspecial();
     }
 
-    // Método específico para rescatar la cobertura de Venta
-    private void testearClaseVentaCompleta() {
-        Venta v1 = new Venta();
-        // Setters
-        v1.setId(1L);
-        v1.setNroFactura("F-001");
-        v1.setCantidadCuotas(3);
-        v1.setEstado(EstadoVenta.FINALIZADA);
-        v1.setMontoTotal(BigDecimal.TEN);
-        v1.setFechaVenta(LocalDate.now());
-        v1.setCliente(new Cliente());
-        v1.setDetalles(new ArrayList<>());
+    // Test manual exhaustivo para Venta
+    private void testearClaseVentaManual() {
+        Venta v = new Venta();
+        v.setId(1L);
+        v.setNroFactura("F-999");
+        v.setCantidadCuotas(3);
+        v.setMontoTotal(BigDecimal.valueOf(100));
+        v.setFechaVenta(LocalDate.now());
+        v.setEstado(EstadoVenta.FINALIZADA);
+        v.setCliente(new Cliente());
+        v.setDetalles(new ArrayList<>());
 
-        // Getters
-        assertThat(v1.getId()).isEqualTo(1L);
-        assertThat(v1.getNroFactura()).isEqualTo("F-001");
-        assertThat(v1.getCantidadCuotas()).isEqualTo(3);
-        assertThat(v1.getEstado()).isEqualTo(EstadoVenta.FINALIZADA);
-        assertThat(v1.getMontoTotal()).isEqualTo(BigDecimal.TEN);
-        assertThat(v1.getFechaVenta()).isNotNull();
-        assertThat(v1.getCliente()).isNotNull();
-        assertThat(v1.getDetalles()).isNotNull();
+        assertThat(v.getId()).isEqualTo(1L);
+        assertThat(v.getNroFactura()).isEqualTo("F-999");
+        assertThat(v.getCantidadCuotas()).isEqualTo(3);
+        assertThat(v.getMontoTotal()).isEqualTo(BigDecimal.valueOf(100));
+        assertThat(v.getFechaVenta()).isNotNull();
+        assertThat(v.getEstado()).isEqualTo(EstadoVenta.FINALIZADA);
+        assertThat(v.getCliente()).isNotNull();
+        assertThat(v.getDetalles()).isNotNull();
 
-        // Equals & HashCode
+        // Equals y HashCode
         Venta v2 = Venta.builder().id(1L).build();
-        Venta v3 = Venta.builder().id(2L).build();
-        verificarEqualsHashCode(v1, v2, v3);
+        verificarEqualsHashCode(v, v2, new Venta());
     }
 
     private void testearClaseCliente() {

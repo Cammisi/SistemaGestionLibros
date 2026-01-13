@@ -21,13 +21,13 @@ class GestionClienteApplicationTests {
 
     @Test
     void contextLoads() {
-        // Verifica que el contexto de Spring levante sin errores
+        // Verifica que Spring arranca bien
     }
 
     @Test
     void verificarMetodoMain() {
-        // Este test invoca el método main para cubrir esas líneas en JaCoCo
-        // Usamos assertThatCode para asegurar que no lance excepciones (Smoke Test)
+        // Este test ejecuta el método main para que JaCoCo lo marque como cubierto
+        // Usamos un array vacío de argumentos
         assertThatCode(() ->
                 GestionClienteApplication.main(new String[]{})
         ).doesNotThrowAnyException();
