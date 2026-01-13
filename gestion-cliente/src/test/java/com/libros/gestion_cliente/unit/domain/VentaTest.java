@@ -16,18 +16,40 @@ class VentaTest {
         DetalleVenta d1 = DetalleVenta.builder()
                 .cantidad(2)
                 .precioAlMomento(new BigDecimal("10.00"))
-                .build();
+                .build(); // Subtotal 20.00
 
         DetalleVenta d2 = DetalleVenta.builder()
                 .cantidad(1)
                 .precioAlMomento(new BigDecimal("5.50"))
-                .build();
+                .build(); // Subtotal 5.50
 
         venta.addDetalle(d1);
         venta.addDetalle(d2);
 
         assertThat(venta.getMontoTotal()).isEqualByComparingTo(new BigDecimal("25.50"));
     }
+
+    // --- ESTE ES EL TEST QUE FALTABA ---
+    @Test
+    void deberiaRestarTotalAlRemoverDetalle() {
+        // GIVEN
+        Venta venta = new Venta();
+        DetalleVenta d1 = DetalleVenta.builder()
+                .cantidad(1)
+                .precioAlMomento(BigDecimal.TEN)
+                .build();
+
+        venta.addDetalle(d1);
+        assertThat(venta.getMontoTotal()).isEqualByComparingTo(BigDecimal.TEN);
+
+        // WHEN
+        venta.removeDetalle(d1);
+
+        // THEN
+        assertThat(venta.getMontoTotal()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(venta.getDetalles()).isEmpty();
+    }
+    // -----------------------------------
 
     @Test
     void deberiaTenerValoresPorDefecto() {
