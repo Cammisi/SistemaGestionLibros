@@ -12,6 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "clientes")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class Cliente {
 
     @Id

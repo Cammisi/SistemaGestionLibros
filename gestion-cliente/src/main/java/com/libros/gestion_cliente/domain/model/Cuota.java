@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "cuotas")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class Cuota {
 
     @Id

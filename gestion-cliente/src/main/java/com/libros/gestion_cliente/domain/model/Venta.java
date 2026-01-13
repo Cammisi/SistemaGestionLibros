@@ -13,6 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "ventas")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class Venta {
 
     @Id

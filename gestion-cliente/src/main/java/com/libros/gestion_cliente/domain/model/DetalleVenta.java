@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "detalle_ventas")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class DetalleVenta {
 
     @Id

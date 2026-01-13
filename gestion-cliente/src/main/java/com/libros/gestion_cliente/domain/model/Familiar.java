@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "familiares")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class Familiar {
 
     @Id

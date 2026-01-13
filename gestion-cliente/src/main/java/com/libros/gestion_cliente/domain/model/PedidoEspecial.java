@@ -7,6 +7,7 @@ import lombok.*;
 @Entity
 @Table(name = "pedidos_especiales")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode(of = "id")
 public class PedidoEspecial {
 
     @Id
