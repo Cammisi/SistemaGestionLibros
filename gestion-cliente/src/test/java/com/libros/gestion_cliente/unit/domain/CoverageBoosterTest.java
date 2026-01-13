@@ -8,83 +8,136 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CoverageBoosterTest {
 
+    // --- 1. TEST DE ENUMS (EXHAUSTIVO) ---
     @Test
-    void testearEnumsParaCobertura() {
-        // Enums: Probamos values() y valueOf()
-        assertThat(EstadoVenta.values()).isNotEmpty();
-        assertThat(EstadoVenta.valueOf("EN_PROCESO")).isEqualTo(EstadoVenta.EN_PROCESO);
-
-        assertThat(EstadoCuota.values()).isNotEmpty();
-        assertThat(EstadoCuota.valueOf("PENDIENTE")).isEqualTo(EstadoCuota.PENDIENTE);
-
-        assertThat(EstadoPedido.values()).isNotEmpty();
-        assertThat(EstadoPedido.valueOf("PENDIENTE_COMPRA")).isEqualTo(EstadoPedido.PENDIENTE_COMPRA);
+    void testearTodosLosEnums() {
+        // Recorremos TODOS los valores para asegurar 100% de cobertura en los Enums
+        for (EstadoVenta e : EstadoVenta.values()) {
+            assertThat(EstadoVenta.valueOf(e.name())).isEqualTo(e);
+        }
+        for (EstadoCuota e : EstadoCuota.values()) {
+            assertThat(EstadoCuota.valueOf(e.name())).isEqualTo(e);
+        }
+        for (EstadoPedido e : EstadoPedido.values()) {
+            assertThat(EstadoPedido.valueOf(e.name())).isEqualTo(e);
+        }
     }
 
+    // --- 2. TEST DE RAMAS LÓGICAS (DETALLE VENTA) ---
     @Test
-    void testearRamasDetalleVenta() {
-        // Ramas lógicas de DetalleVenta
+    void testearRamasComplejas() {
+        // Caso 1: Todo Nulo
         DetalleVenta d1 = new DetalleVenta();
         assertThat(d1.getSubtotal()).isEqualTo(BigDecimal.ZERO);
 
-        DetalleVenta d2 = DetalleVenta.builder().cantidad(1).build();
+        // Caso 2: Solo Cantidad
+        DetalleVenta d2 = new DetalleVenta();
+        d2.setCantidad(5);
         assertThat(d2.getSubtotal()).isEqualTo(BigDecimal.ZERO);
 
-        DetalleVenta d3 = DetalleVenta.builder().precioAlMomento(BigDecimal.TEN).build();
-        d3.setCantidad(null);
+        // Caso 3: Solo Precio
+        DetalleVenta d3 = new DetalleVenta();
+        d3.setPrecioAlMomento(BigDecimal.TEN);
+        d3.setCantidad(null); // Forzamos nulo
         assertThat(d3.getSubtotal()).isEqualTo(BigDecimal.ZERO);
 
-        DetalleVenta d4 = DetalleVenta.builder().cantidad(2).precioAlMomento(BigDecimal.TEN).build();
+        // Caso 4: Todo OK
+        DetalleVenta d4 = new DetalleVenta();
+        d4.setCantidad(2);
+        d4.setPrecioAlMomento(BigDecimal.TEN);
         assertThat(d4.getSubtotal()).isEqualByComparingTo(new BigDecimal("20.00"));
     }
 
+    // --- 3. TEST DE ENTIDADES (POJO TESTER) ---
+    // Probamos Getters, Setters, Equals, HashCode y ToString de TODAS las clases
     @Test
-    void testearMetodosLombokFaltantes() {
-
-        // 1. Cliente
-        Cliente c1 = new Cliente();
-        Cliente c2 = new Cliente();
-        verificarMetodosEstandar(c1, c2);
-
-        // 2. Familiar
-        Familiar f1 = new Familiar();
-        Familiar f2 = new Familiar();
-        verificarMetodosEstandar(f1, f2);
-
-        // 3. Libro (Probamos los nuevos campos explícitamente)
-        Libro l1 = new Libro();
-        l1.setTematica("A");
-        l1.setCantVolumenes(1);
-        l1.setPrecioBase(BigDecimal.ONE);
-        assertThat(l1.getTematica()).isEqualTo("A");
-        assertThat(l1.getCantVolumenes()).isEqualTo(1);
-        assertThat(l1.getPrecioBase()).isEqualTo(BigDecimal.ONE);
-        verificarMetodosEstandar(l1, new Libro());
-
-        // 4. Venta (Probamos nroFactura y montoTotal)
-        Venta v1 = new Venta();
-        v1.setNroFactura("A");
-        v1.setMontoTotal(BigDecimal.TEN);
-        assertThat(v1.getNroFactura()).isEqualTo("A");
-        assertThat(v1.getMontoTotal()).isEqualTo(BigDecimal.TEN);
-        verificarMetodosEstandar(v1, new Venta());
-
-        // 5. Cuota
-        Cuota cu1 = new Cuota();
-        Cuota cu2 = new Cuota();
-        verificarMetodosEstandar(cu1, cu2);
-
-        // 6. PedidoEspecial
-        PedidoEspecial p1 = new PedidoEspecial();
-        PedidoEspecial p2 = new PedidoEspecial();
-        verificarMetodosEstandar(p1, p2);
+    void testearEntidadesCompletas() {
+        testearClaseCliente();
+        testearClaseFamiliar();
+        testearClaseLibro();
+        testearClaseVenta();
+        testearClaseDetalleVenta();
+        testearClaseCuota();
+        testearClasePedidoEspecial();
     }
 
-    private void verificarMetodosEstandar(Object o1, Object o2) {
-        // Invoca toString, equals y hashCode para forzar cobertura
-        assertThat(o1.toString()).isNotNull();
-        assertThat(o1).isEqualTo(o1);
-        assertThat(o1).isNotEqualTo(o2);
-        assertThat(o1.hashCode()).isNotZero();
+    private void testearClaseCliente() {
+        Cliente c1 = Cliente.builder().id(1L).dni("A").build();
+        Cliente c2 = Cliente.builder().id(1L).dni("A").build(); // Idéntico a c1
+        Cliente c3 = Cliente.builder().id(2L).dni("B").build(); // Distinto
+
+        verificarMetodos(c1, c2, c3);
+    }
+
+    private void testearClaseFamiliar() {
+        Familiar f1 = Familiar.builder().id(1L).nombre("A").build();
+        Familiar f2 = Familiar.builder().id(1L).nombre("A").build();
+        Familiar f3 = Familiar.builder().id(2L).nombre("B").build();
+
+        verificarMetodos(f1, f2, f3);
+    }
+
+    private void testearClaseLibro() {
+        Libro l1 = Libro.builder().id(1L).isbn("111").build();
+        Libro l2 = Libro.builder().id(1L).isbn("111").build();
+        Libro l3 = Libro.builder().id(2L).isbn("222").build();
+
+        verificarMetodos(l1, l2, l3);
+    }
+
+    private void testearClaseVenta() {
+        Venta v1 = Venta.builder().id(1L).nroFactura("A").build();
+        Venta v2 = Venta.builder().id(1L).nroFactura("A").build();
+        Venta v3 = Venta.builder().id(2L).nroFactura("B").build();
+
+        verificarMetodos(v1, v2, v3);
+    }
+
+    private void testearClaseDetalleVenta() {
+        DetalleVenta d1 = DetalleVenta.builder().id(1L).build();
+        DetalleVenta d2 = DetalleVenta.builder().id(1L).build();
+        DetalleVenta d3 = DetalleVenta.builder().id(2L).build();
+
+        verificarMetodos(d1, d2, d3);
+    }
+
+    private void testearClaseCuota() {
+        Cuota c1 = Cuota.builder().id(1L).numeroCuota(1).build();
+        Cuota c2 = Cuota.builder().id(1L).numeroCuota(1).build();
+        Cuota c3 = Cuota.builder().id(2L).numeroCuota(2).build();
+
+        // Setters específicos
+        c1.setFechaPagoReal(LocalDate.now());
+        c1.setNroReciboPago("R1");
+        assertThat(c1.getFechaPagoReal()).isNotNull();
+        assertThat(c1.getNroReciboPago()).isEqualTo("R1");
+
+        verificarMetodos(c1, c2, c3);
+    }
+
+    private void testearClasePedidoEspecial() {
+        PedidoEspecial p1 = PedidoEspecial.builder().id(1L).descripcion("A").build();
+        PedidoEspecial p2 = PedidoEspecial.builder().id(1L).descripcion("A").build();
+        PedidoEspecial p3 = PedidoEspecial.builder().id(2L).descripcion("B").build();
+
+        verificarMetodos(p1, p2, p3);
+    }
+
+    // --- MÉTODO GENÉRICO PARA VALIDAR LOMBOK ---
+    private void verificarMetodos(Object obj1, Object obj2, Object obj3) {
+        // 1. Equals y HashCode (Caso: Iguales)
+        assertThat(obj1).isEqualTo(obj2);
+        assertThat(obj1.hashCode()).isEqualTo(obj2.hashCode());
+
+        // 2. Equals (Caso: Diferentes)
+        assertThat(obj1).isNotEqualTo(obj3);
+
+        // 3. Equals (Casos Borde)
+        assertThat(obj1).isNotEqualTo(null);
+        assertThat(obj1).isNotEqualTo(new Object());
+        assertThat(obj1).isEqualTo(obj1); // Mismo objeto en memoria
+
+        // 4. ToString
+        assertThat(obj1.toString()).isNotEmpty();
     }
 }
