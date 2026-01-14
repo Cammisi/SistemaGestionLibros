@@ -11,6 +11,7 @@ class VentaTest {
 
     @Test
     void deberiaCalcularTotalAutomaticamenteAlAgregarDetalles() {
+        // GIVEN
         Venta venta = new Venta();
 
         DetalleVenta d1 = DetalleVenta.builder()
@@ -23,13 +24,15 @@ class VentaTest {
                 .precioAlMomento(new BigDecimal("5.50"))
                 .build(); // Subtotal 5.50
 
+        // WHEN
         venta.addDetalle(d1);
         venta.addDetalle(d2);
 
+        // THEN
         assertThat(venta.getMontoTotal()).isEqualByComparingTo(new BigDecimal("25.50"));
     }
 
-    // --- ESTE ES EL TEST QUE FALTABA ---
+    // --- ESTE ES EL TEST CLAVE QUE FALTA PARA EL 100% ---
     @Test
     void deberiaRestarTotalAlRemoverDetalle() {
         // GIVEN
@@ -40,16 +43,17 @@ class VentaTest {
                 .build();
 
         venta.addDetalle(d1);
+        // Verificamos que sumó primero
         assertThat(venta.getMontoTotal()).isEqualByComparingTo(BigDecimal.TEN);
 
-        // WHEN
+        // WHEN: Removemos el detalle
         venta.removeDetalle(d1);
 
-        // THEN
+        // THEN: El total debe volver a cero
         assertThat(venta.getMontoTotal()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(venta.getDetalles()).isEmpty();
     }
-    // -----------------------------------
+    // ----------------------------------------------------
 
     @Test
     void deberiaTenerValoresPorDefecto() {
