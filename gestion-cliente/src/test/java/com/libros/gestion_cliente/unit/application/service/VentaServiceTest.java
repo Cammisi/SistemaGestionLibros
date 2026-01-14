@@ -73,30 +73,25 @@ class VentaServiceTest {
         verify(cuotaRepository, times(3)).save(any(Cuota.class));
     }
 
-    // --- TEST 2: FALLO POR CLIENTE INEXISTENTE (Cubre lambda$registrarVenta$1) ---
+    // --- TEST 2: FALLO POR CLIENTE INEXISTENTE ---
     @Test
     void registrarVenta_DeberiaLanzarExcepcion_CuandoClienteNoExiste() {
-        // GIVEN
         Long clienteIdInexistente = 99L;
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteIdInexistente);
 
-        // Mock: Devolvemos Empty para forzar el .orElseThrow
         when(clienteRepository.findById(clienteIdInexistente)).thenReturn(Optional.empty());
 
-        // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Cliente no encontrado");
 
-        // Verificamos que se cortó el flujo y no se consultó nada más
         verify(ventaRepository, never()).existsByClienteIdAndEstado(any(), any());
     }
 
-    // --- TEST 3: FALLO POR LIBRO INEXISTENTE (Cubre lambda$registrarVenta$0) ---
+    // --- TEST 3: FALLO POR LIBRO INEXISTENTE ---
     @Test
     void registrarVenta_DeberiaLanzarExcepcion_CuandoLibroNoExiste() {
-        // GIVEN
         Long clienteId = 1L;
         Long libroIdInexistente = 99L;
 
@@ -108,25 +103,28 @@ class VentaServiceTest {
         request.setClienteId(clienteId);
         request.setItems(List.of(item));
 
-        // Mocks: Cliente existe y no debe nada, pero el libro NO existe
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(new Cliente()));
+        // CORRECCIÓN AQUÍ: Usamos builder().id() para que el cliente tenga ID y no sea null
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
-        when(libroRepository.findById(libroIdInexistente)).thenReturn(Optional.empty()); // <-- Aquí salta el error
+        when(libroRepository.findById(libroIdInexistente)).thenReturn(Optional.empty());
 
-        // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Libro no encontrado");
     }
 
-    // --- TEST 4: FALLO POR DEUDA ---
+    // --- TEST 4: FALLO POR DEUDA (EL QUE FALLABA) ---
     @Test
     void registrarVenta_DeberiaFallar_SiClienteTieneDeuda() {
         Long clienteId = 1L;
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
 
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(new Cliente()));
+        // CORRECCIÓN CLAVE: Devolvemos un cliente CON ID
+        // Antes era: new Cliente() -> id era null -> fallaba la comparación eq(clienteId)
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
+
+        // Ahora sí coinciden los argumentos (1L == 1L)
         when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true);
 
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
@@ -139,6 +137,7 @@ class VentaServiceTest {
     void registrarVenta_DeberiaFallar_SiYaComproLibro() {
         Long clienteId = 1L;
         Long libroId = 10L;
+
         CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
         item.setLibroId(libroId);
         item.setCantidad(1);
