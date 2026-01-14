@@ -1,6 +1,7 @@
 package com.libros.gestion_cliente.domain.repository;
 
 import com.libros.gestion_cliente.domain.model.Venta;
+import com.libros.gestion_cliente.domain.model.EstadoVenta;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,4 +13,6 @@ public interface VentaRepository {
 
     // CAMBIO: Recibe String porque nro_factura es VARCHAR
     Optional<Venta> findByNroFactura(String nroFactura);
+    // Buscar si el cliente tiene alguna venta activa (EN_PROCESO o PAGANDO)
+    boolean existsByClienteIdAndEstado(Long clienteId, EstadoVenta estado);
 }

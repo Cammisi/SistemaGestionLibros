@@ -21,13 +21,21 @@ class GestionClienteApplicationTests {
 
     @Test
     void contextLoads() {
-        // Verifica que Spring arranca bien
+        // Este test verifica que el contexto "de test" levanta bien gracias a @ServiceConnection
     }
 
     @Test
     void verificarMetodoMain() {
-        // Este test ejecuta el método main para que JaCoCo lo marque como cubierto
-        // Usamos un array vacío de argumentos
+        // TRUCO: Le pasamos las coordenadas del contenedor Docker al sistema
+        // para que cuando main() arranque la app, sepa a dónde conectarse.
+        System.setProperty("spring.datasource.url", postgres.getJdbcUrl());
+        System.setProperty("spring.datasource.username", postgres.getUsername());
+        System.setProperty("spring.datasource.password", postgres.getPassword());
+
+        // Importante: Usamos puerto 0 para que no choque si el 8080 está ocupado
+        System.setProperty("server.port", "0");
+
+        // Ahora sí, ejecutamos main() sin miedo
         assertThatCode(() ->
                 GestionClienteApplication.main(new String[]{})
         ).doesNotThrowAnyException();
