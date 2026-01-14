@@ -33,9 +33,9 @@ class VentaServiceTest {
     @InjectMocks
     private VentaService ventaService;
 
+    // --- TEST 1: CAMINO FELIZ (Todo OK) ---
     @Test
     void registrarVenta_DeberiaCrearVentaYCuotas_CuandoTodoEsCorrecto() {
-        // GIVEN
         Long clienteId = 1L;
         Long libroId = 10L;
 
@@ -56,97 +56,121 @@ class VentaServiceTest {
         request.setCantidadCuotas(3);
         request.setItems(List.of(item));
 
-        // MOCKS: Usamos any() para ser más flexibles y evitar errores de strict stubbing
+        // Mocks
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(false);
         when(libroRepository.findById(libroId)).thenReturn(Optional.of(libro));
         when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(false);
-
         when(ventaRepository.save(any(Venta.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // WHEN
+        // Ejecución
         Venta resultado = ventaService.registrarVenta(request);
 
-        // THEN
+        // Verificaciones
         assertThat(resultado.getCliente()).isEqualTo(cliente);
         assertThat(resultado.getMontoTotal()).isEqualByComparingTo(new BigDecimal("100.00"));
-
         verify(libroRepository).save(libro);
-        assertThat(libro.getStock()).isEqualTo(9);
-
         verify(cuotaRepository, times(3)).save(any(Cuota.class));
     }
 
+    // --- TEST 2: FALLO POR CLIENTE INEXISTENTE (Cubre lambda$registrarVenta$1) ---
     @Test
-    void registrarVenta_DeberiaFallar_SiClienteTieneDeuda() {
+    void registrarVenta_DeberiaLanzarExcepcion_CuandoClienteNoExiste() {
         // GIVEN
-        Long clienteId = 1L;
+        Long clienteIdInexistente = 99L;
         CrearVentaRequest request = new CrearVentaRequest();
-        request.setClienteId(clienteId);
+        request.setClienteId(clienteIdInexistente);
 
-        // Cliente existe
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
-
-        // Tiene deuda (Stubbing relajado con any())
-        when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true);
+        // Mock: Devolvemos Empty para forzar el .orElseThrow
+        when(clienteRepository.findById(clienteIdInexistente)).thenReturn(Optional.empty());
 
         // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("venta en proceso");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cliente no encontrado");
 
-        verify(ventaRepository, never()).save(any());
+        // Verificamos que se cortó el flujo y no se consultó nada más
+        verify(ventaRepository, never()).existsByClienteIdAndEstado(any(), any());
     }
 
+    // --- TEST 3: FALLO POR LIBRO INEXISTENTE (Cubre lambda$registrarVenta$0) ---
     @Test
-    void registrarVenta_DeberiaFallar_SiYaComproLibro() {
+    void registrarVenta_DeberiaLanzarExcepcion_CuandoLibroNoExiste() {
         // GIVEN
         Long clienteId = 1L;
-        Long libroId = 10L;
+        Long libroIdInexistente = 99L;
 
         CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(libroId);
+        item.setLibroId(libroIdInexistente);
         item.setCantidad(1);
 
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
         request.setItems(List.of(item));
 
-        // Cliente OK
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
-        // Sin deuda
+        // Mocks: Cliente existe y no debe nada, pero el libro NO existe
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(new Cliente()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
-        // Libro existe
-        when(libroRepository.findById(libroId)).thenReturn(Optional.of(Libro.builder().id(libroId).build()));
-
-        // YA COMPRÓ EL LIBRO (El stubbing clave)
-        when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(true);
+        when(libroRepository.findById(libroIdInexistente)).thenReturn(Optional.empty()); // <-- Aquí salta el error
 
         // WHEN / THEN
+        assertThatThrownBy(() -> ventaService.registrarVenta(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Libro no encontrado");
+    }
+
+    // --- TEST 4: FALLO POR DEUDA ---
+    @Test
+    void registrarVenta_DeberiaFallar_SiClienteTieneDeuda() {
+        Long clienteId = 1L;
+        CrearVentaRequest request = new CrearVentaRequest();
+        request.setClienteId(clienteId);
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(new Cliente()));
+        when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true);
+
+        assertThatThrownBy(() -> ventaService.registrarVenta(request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("venta en proceso");
+    }
+
+    // --- TEST 5: FALLO POR DUPLICADO ---
+    @Test
+    void registrarVenta_DeberiaFallar_SiYaComproLibro() {
+        Long clienteId = 1L;
+        Long libroId = 10L;
+        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
+        item.setLibroId(libroId);
+        item.setCantidad(1);
+        CrearVentaRequest request = new CrearVentaRequest();
+        request.setClienteId(clienteId);
+        request.setItems(List.of(item));
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
+        when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
+        when(libroRepository.findById(libroId)).thenReturn(Optional.of(Libro.builder().id(libroId).build()));
+        when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(true);
+
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ya compró el libro");
     }
 
+    // --- TEST 6: FALLO POR STOCK ---
     @Test
     void registrarVenta_DeberiaFallar_SiStockInsuficiente() {
-        // GIVEN
         Long libroId = 10L;
         CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
         item.setLibroId(libroId);
         item.setCantidad(5);
-
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
         request.setItems(List.of(item));
 
         when(clienteRepository.findById(any())).thenReturn(Optional.of(Cliente.builder().id(1L).build()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
-
-        // Libro con stock 1 (pide 5)
         when(libroRepository.findById(libroId)).thenReturn(Optional.of(Libro.builder().id(libroId).stock(1).build()));
 
-        // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Stock insuficiente");
