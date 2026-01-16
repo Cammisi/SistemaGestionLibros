@@ -116,20 +116,30 @@ class VentaServiceTest {
     // --- TEST 4: FALLO POR DEUDA (EL QUE FALLABA) ---
     @Test
     void registrarVenta_DeberiaFallar_SiClienteTieneDeuda() {
-        Long clienteId = 1L;
+        // GIVEN
+        Long clienteId = 1L; // Asegúrate de usar 1L
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
 
-        // CORRECCIÓN CLAVE: Devolvemos un cliente CON ID
-        // Antes era: new Cliente() -> id era null -> fallaba la comparación eq(clienteId)
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
+        // --- CORRECCIÓN AQUÍ ---
+        // Antes probablemente tenías: new Cliente() o builder().build() sin ID.
+        // Debemos ponerle el ID explícitamente: .id(clienteId)
+        Cliente clienteSimulado = Cliente.builder()
+                .id(clienteId) // <--- ¡ESTO ES LO QUE FALTA!
+                .nombre("Test")
+                .build();
 
-        // Ahora sí coinciden los argumentos (1L == 1L)
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(clienteSimulado));
+
+        // Ahora Mockito estará feliz porque el ID (1L) coincidirá
         when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true);
 
+        // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("venta en proceso");
+
+        verify(ventaRepository, never()).save(any());
     }
 
     // --- TEST 5: FALLO POR DUPLICADO ---

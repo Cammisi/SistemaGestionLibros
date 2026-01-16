@@ -3,6 +3,7 @@ package com.libros.gestion_cliente.domain.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 
@@ -18,6 +19,7 @@ public class DetalleVenta {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venta_id")
+    @JsonIgnore
     private Venta venta;
 
     @ManyToOne(fetch = FetchType.LAZY)

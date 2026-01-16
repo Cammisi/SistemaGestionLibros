@@ -1,39 +1,33 @@
--- 1. TIPOS ENUM (Vitales para que no falle Hibernate)
-DROP TYPE IF EXISTS estado_venta CASCADE;
-DROP TYPE IF EXISTS estado_cuota CASCADE;
-DROP TYPE IF EXISTS estado_pedido CASCADE;
 
-CREATE TYPE estado_venta AS ENUM ('EN_PROCESO', 'FINALIZADA', 'CANCELADA');
-CREATE TYPE estado_cuota AS ENUM ('PENDIENTE', 'PAGADA', 'ATRASADA', 'VENCIDA');
-CREATE TYPE estado_pedido AS ENUM ('PENDIENTE_COMPRA', 'COMPRADO', 'ENTREGADO');
 
 -- 2. TABLAS (Usando BIGSERIAL para coincidir con Java Long)
 
-CREATE TABLE IF NOT EXISTS clientes (
+CREATE TABLE clientes (
     id BIGSERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    dni VARCHAR(20) UNIQUE,
-    direccion VARCHAR(200),
+    dni VARCHAR(20) NOT NULL UNIQUE,
+    direccion VARCHAR(250),
     telefono VARCHAR(50),
     localidad VARCHAR(100),
     intereses_personales TEXT,
     fecha_alta DATE DEFAULT CURRENT_DATE
     );
 
-CREATE TABLE IF NOT EXISTS familiares (
+CREATE TABLE familiares (
     id BIGSERIAL PRIMARY KEY,
-    cliente_id BIGINT REFERENCES clientes(id),
     nombre VARCHAR(100),
     apellido VARCHAR(100),
     anio_nacimiento INT,
     relacion VARCHAR(50),
-    intereses TEXT
+    intereses TEXT,
+	cliente_id BIGINT,
+	CONSTRAINT fk_familiares_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
 
-CREATE TABLE IF NOT EXISTS libros (
+CREATE TABLE libros (
     id BIGSERIAL PRIMARY KEY,
-    isbn VARCHAR(20) UNIQUE,
+    isbn VARCHAR(20) NOT NULL UNIQUE,
     titulo VARCHAR(150) NOT NULL,
     autor VARCHAR(100),
     tematica VARCHAR(100),
@@ -42,38 +36,52 @@ CREATE TABLE IF NOT EXISTS libros (
     stock INT DEFAULT 0
     );
 
-CREATE TABLE IF NOT EXISTS ventas (
+CREATE TABLE ventas (
     id BIGSERIAL PRIMARY KEY,
-    cliente_id BIGINT REFERENCES clientes(id),
     fecha_venta DATE DEFAULT CURRENT_DATE,
-    nro_factura VARCHAR(50) UNIQUE,
+    nro_factura VARCHAR(50) NOT NULL UNIQUE,
     monto_total DECIMAL(10, 2) NOT NULL,
     cantidad_cuotas INT DEFAULT 1,
-    estado estado_venta DEFAULT 'EN_PROCESO'
+    estado VARCHAR(20),
+	cliente_id BIGINT, 
+    CONSTRAINT fk_venta_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
 
-CREATE TABLE IF NOT EXISTS detalle_ventas (
-    id BIGSERIAL PRIMARY KEY,
-    venta_id BIGINT REFERENCES ventas(id),
-    libro_id BIGINT REFERENCES libros(id),
+CREATE TABLE detalle_ventas (
+	id BIGSERIAL PRIMARY KEY,
+    cantidad INT DEFAULT 1,
     precio_al_momento DECIMAL(10, 2),
-    cantidad INT DEFAULT 1
+    venta_id BIGINT,
+    libro_id BIGINT,
+    CONSTRAINT fk_detalle_venta FOREIGN KEY (venta_id) REFERENCES ventas(id),
+    CONSTRAINT fk_detalle_libro FOREIGN KEY (libro_id) REFERENCES libros(id)
     );
 
-CREATE TABLE IF NOT EXISTS cuotas (
+CREATE TABLE cuotas (
     id BIGSERIAL PRIMARY KEY,
-    venta_id BIGINT REFERENCES ventas(id),
     numero_cuota INT NOT NULL,
     monto_cuota DECIMAL(10, 2) NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     fecha_pago_real DATE,
     nro_recibo_pago VARCHAR(50),
-    estado estado_cuota DEFAULT 'PENDIENTE'
+    estado VARCHAR(20),
+    venta_id BIGINT,
+    CONSTRAINT fk_cuota_venta FOREIGN KEY (venta_id) REFERENCES ventas(id)
     );
 
-CREATE TABLE IF NOT EXISTS pedidos_especiales (
+CREATE TABLE pedidos_especiales (
     id BIGSERIAL PRIMARY KEY,
-    cliente_id BIGINT REFERENCES clientes(id),
     descripcion VARCHAR(200),
-    estado estado_pedido DEFAULT 'PENDIENTE_COMPRA'
+    estado VARCHAR(20),
+	cliente_id BIGINT,
+	CONSTRAINT fk_pedidos_especiales_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
+
+INSERT INTO clientes (nombre, apellido, dni, fecha_alta) 
+VALUES ('Juan', 'Perez', '12345678', CURRENT_DATE);
+
+INSERT INTO libros (isbn, titulo, precio_base, stock) 
+VALUES ('978-1', 'El Señor de los Anillos', 5000.00, 10);
+
+INSERT INTO libros (isbn, titulo, precio_base, stock) 
+VALUES ('978-2', 'Clean Code', 12000.50, 5);

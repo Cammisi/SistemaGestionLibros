@@ -44,7 +44,7 @@ class ClienteRepositoryTest {
         Cliente cliente = Cliente.builder()
                 .nombre("José")
                 .apellido("Lopez")
-                .dni("12345678")
+                .dni("99999999")
                 .direccion("Calle Nuñez 123")
                 .build();
 
@@ -60,7 +60,7 @@ class ClienteRepositoryTest {
         // Verificamos recuperando de la BD
         Optional<Cliente> recuperado = clienteRepository.findById(guardado.getId());
         assertThat(recuperado).isPresent();
-        assertThat(recuperado.get().getDni()).isEqualTo("12345678");
+        assertThat(recuperado.get().getDni()).isEqualTo("99999999");
         assertThat(recuperado.get().getFamiliares().get(0).getNombre()).isEqualTo("Mateo");
     }
 
