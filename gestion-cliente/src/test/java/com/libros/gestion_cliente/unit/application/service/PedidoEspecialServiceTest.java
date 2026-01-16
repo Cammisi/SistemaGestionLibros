@@ -107,4 +107,18 @@ class PedidoEspecialServiceTest {
         when(pedidoRepository.findByEstado(EstadoPedido.PENDIENTE)).thenReturn(List.of(new PedidoEspecial()));
         assertThat(pedidoService.listarPendientes()).hasSize(1);
     }
+
+    @Test
+    void cambiarEstado_DeberiaLanzarExcepcion_SiPedidoEstabaCancelado() {
+        // GIVEN: Un pedido que ya fue CANCELADO
+        PedidoEspecial pedido = PedidoEspecial.builder().id(1L).estado(EstadoPedido.CANCELADO).build();
+
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        // WHEN / THEN: Intentar revivirlo debe fallar
+        // Esto fuerza a Java a evaluar la segunda parte del OR ( || pedido.getEstado() == CANCELADO )
+        assertThatThrownBy(() -> pedidoService.cambiarEstado(1L, EstadoPedido.PENDIENTE))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No se puede modificar un pedido finalizado");
+    }
 }
