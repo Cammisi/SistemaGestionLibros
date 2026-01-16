@@ -73,4 +73,41 @@ class LibroServiceTest {
         assertThatThrownBy(() -> libroService.buscarPorIsbn("999"))
                 .isInstanceOf(RuntimeException.class);
     }
+
+    // --- NUEVO TEST 1: Cubre la rama FALSE del ternario (request es NULL -> usa 1) ---
+    @Test
+    void crearLibro_DeberiaAsignar1Volumen_CuandoInputEsNull() {
+        // GIVEN
+        CrearLibroRequest request = new CrearLibroRequest();
+        request.setIsbn("LIB-001");
+        request.setCantVolumenes(null); // <--- FORZAMOS NULL
+
+        when(libroRepository.existsByIsbn("LIB-001")).thenReturn(false);
+        // Capturamos el libro que se intenta guardar para inspeccionarlo
+        when(libroRepository.save(any(Libro.class))).thenAnswer(i -> i.getArgument(0));
+
+        // WHEN
+        Libro resultado = libroService.crearLibro(request);
+
+        // THEN
+        assertThat(resultado.getCantVolumenes()).isEqualTo(1); // Debe ser el default
+    }
+
+    // --- NUEVO TEST 2: Cubre la rama TRUE del ternario (request tiene VALOR -> usa VALOR) ---
+    @Test
+    void crearLibro_DeberiaAsignarVolumenesDelRequest_CuandoNoEsNull() {
+        // GIVEN
+        CrearLibroRequest request = new CrearLibroRequest();
+        request.setIsbn("LIB-002");
+        request.setCantVolumenes(5); // <--- FORZAMOS VALOR
+
+        when(libroRepository.existsByIsbn("LIB-002")).thenReturn(false);
+        when(libroRepository.save(any(Libro.class))).thenAnswer(i -> i.getArgument(0));
+
+        // WHEN
+        Libro resultado = libroService.crearLibro(request);
+
+        // THEN
+        assertThat(resultado.getCantVolumenes()).isEqualTo(5); // Debe respetar el input
+    }
 }
