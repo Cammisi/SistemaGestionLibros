@@ -40,11 +40,14 @@ public class GlobalExceptionHandler {
     // Ojo: RuntimeException es muy genérico. Lo ideal es capturar EntityNotFoundException para 404.
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
-        // Si el mensaje dice explícitamente "no encontrado", devolvemos 404 (parche rápido)
-        if (ex.getMessage() != null && ex.getMessage().contains("no encontrado")) {
+        // Convertimos a minúsculas para evitar problemas de case-sensitivity
+        String mensaje = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+
+        // Buscamos "no encontrad" para cubrir "o" y "a" (masculino/femenino)
+        if (mensaje.contains("no encontrad")) {
             return buildResponse(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
         }
-        // Para todo lo demás, es un error interno del servidor
+
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error Interno", ex.getMessage());
     }
 
