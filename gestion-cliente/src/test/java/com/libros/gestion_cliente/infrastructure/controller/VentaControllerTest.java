@@ -141,4 +141,43 @@ class VentaControllerTest {
                 .andExpect(status().isNotFound()) // Esperamos 404
                 .andExpect(jsonPath("$.error").value("Recurso no encontrado"));
     }
+
+    // --- NUEVO TEST 1: Cubre handleJsonError (0% -> 100%) ---
+    @Test
+    void registrarVenta_DeberiaRetornar400_CuandoJsonEstaMalFormado() throws Exception {
+        // GIVEN: Un JSON con sintaxis rota (le falta la llave de cierre)
+        String jsonMalformado = "{ \"clienteId\": 1, \"cantidadCuotas\": 3 ";
+
+        // WHEN & THEN
+        mockMvc.perform(post("/api/ventas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMalformado))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Formato JSON Inválido"));
+    }
+
+    // --- NUEVO TEST 2: Cubre el 'else' de handleRuntime (68% -> 100%) ---
+    @Test
+    void registrarVenta_DeberiaRetornar500_CuandoOcurreErrorInesperado() throws Exception {
+        // GIVEN: Un request válido...
+        CrearVentaRequest request = new CrearVentaRequest();
+        request.setClienteId(1L);
+        request.setCantidadCuotas(1);
+        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
+        item.setLibroId(1L);
+        item.setCantidad(1);
+        request.setItems(List.of(item));
+
+        // ...PERO el servicio lanza un error GENÉRICO (sin el texto "no encontrado")
+        when(ventaService.registrarVenta(any()))
+                .thenThrow(new RuntimeException("Error fatal de base de datos"));
+
+        // WHEN & THEN
+        mockMvc.perform(post("/api/ventas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError()) // Esperamos 500
+                .andExpect(jsonPath("$.error").value("Error Interno"))
+                .andExpect(jsonPath("$.message").value("Error fatal de base de datos"));
+    }
 }
