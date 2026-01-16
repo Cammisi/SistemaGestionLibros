@@ -25,5 +25,5 @@ public class PedidoEspecial {
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "estado_pedido", nullable = false)
     @Builder.Default
-    private EstadoPedido estado = EstadoPedido.PENDIENTE_COMPRA;
+    private EstadoPedido estado = EstadoPedido.PENDIENTE;
 }

@@ -21,7 +21,7 @@ class PedidoEspecialTest {
                 .build();
 
         // THEN
-        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.PENDIENTE_COMPRA); // Default verificado
+        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.PENDIENTE); // Default verificado
         assertThat(pedido.getCliente()).isEqualTo(cliente);
         assertThat(pedido.getDescripcion()).isEqualTo("Libro importado");
     }

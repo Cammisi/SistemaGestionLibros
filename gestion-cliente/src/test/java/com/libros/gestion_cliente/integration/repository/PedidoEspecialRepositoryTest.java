@@ -41,7 +41,7 @@ class PedidoEspecialRepositoryTest {
         PedidoEspecial pedido = PedidoEspecial.builder()
                 .cliente(cliente)
                 .descripcion("Libro raro de 1990")
-                .estado(EstadoPedido.PENDIENTE_COMPRA)
+                .estado(EstadoPedido.PENDIENTE)
                 .build();
 
         // WHEN
