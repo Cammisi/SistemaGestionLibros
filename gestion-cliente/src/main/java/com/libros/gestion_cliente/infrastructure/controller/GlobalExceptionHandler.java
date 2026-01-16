@@ -14,9 +14,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. Error de Negocio (Stock, Deuda, etc) -> 400
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleBusinessRules(IllegalStateException ex) {
+    // Capturamos AMBOS tipos de errores de lógica
+    @ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
+    public ResponseEntity<Map<String, Object>> handleBusinessRules(RuntimeException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Error de Negocio", ex.getMessage());
     }
 
