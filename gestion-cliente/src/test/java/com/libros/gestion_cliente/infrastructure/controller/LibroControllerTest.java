@@ -10,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -59,10 +61,15 @@ class LibroControllerTest {
 
     @Test
     void listarLibros_DeberiaRetornar200() throws Exception {
-        when(libroService.listarLibros()).thenReturn(List.of(new Libro()));
-        mockMvc.perform(get("/api/libros"))
+        // Mockeamos una página vacía o con datos
+        PageImpl<Libro> page = new PageImpl<>(List.of(new Libro()));
+        when(libroService.listarLibros(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/libros")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content.length()").value(1)); // En Page, los datos están en ".content"
     }
 
     @Test

@@ -3,6 +3,8 @@ package com.libros.gestion_cliente.domain.repository;
 import com.libros.gestion_cliente.domain.model.Libro;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface LibroRepository {
     Libro save(Libro libro);
@@ -12,6 +14,7 @@ public interface LibroRepository {
     List<Libro> findAll();
     void deleteById(Long id);
     boolean existsByIsbn(String isbn);
+    Page<Libro> findAll(Pageable pageable);
 
     List<Libro> findByTituloContainingIgnoreCase(String titulo);
 }

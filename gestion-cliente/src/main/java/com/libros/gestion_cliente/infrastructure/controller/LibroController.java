@@ -7,11 +7,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/libros")
@@ -22,16 +23,15 @@ public class LibroController {
     private final LibroService libroService;
 
     @PostMapping
-    @Operation(summary = "Registrar nuevo libro", description = "Agrega un libro al inventario verificando ISBN único.")
+    @Operation(summary = "Registrar nuevo libro")
     public ResponseEntity<Libro> crearLibro(@Valid @RequestBody CrearLibroRequest request) {
-        Libro nuevoLibro = libroService.crearLibro(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoLibro);
+        return ResponseEntity.status(HttpStatus.CREATED).body(libroService.crearLibro(request));
     }
 
     @GetMapping
-    @Operation(summary = "Listar inventario completo")
-    public ResponseEntity<List<Libro>> listarLibros() {
-        return ResponseEntity.ok(libroService.listarLibros());
+    @Operation(summary = "Listar inventario paginado", description = "Ejemplo: /api/libros?page=0&size=10&sort=titulo,asc")
+    public ResponseEntity<Page<Libro>> listarLibros(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(libroService.listarLibros(pageable));
     }
 
     @GetMapping("/{isbn}")

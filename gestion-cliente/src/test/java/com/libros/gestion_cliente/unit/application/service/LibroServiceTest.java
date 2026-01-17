@@ -9,6 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -56,9 +59,18 @@ class LibroServiceTest {
     }
 
     @Test
-    void listarLibros_DeberiaRetornarLista() {
-        when(libroRepository.findAll()).thenReturn(List.of(new Libro()));
-        assertThat(libroService.listarLibros()).hasSize(1);
+    void listarLibros_DeberiaRetornarPagina() {
+        // GIVEN
+        Pageable pageable = Pageable.unpaged();
+        // Mockeamos que el repositorio devuelve una Page
+        Page<Libro> paginaMock = new PageImpl<>(List.of(new Libro()));
+        when(libroRepository.findAll(pageable)).thenReturn(paginaMock);
+
+        // WHEN
+        Page<Libro> resultado = libroService.listarLibros(pageable);
+
+        // THEN
+        assertThat(resultado).hasSize(1);
     }
 
     @Test
