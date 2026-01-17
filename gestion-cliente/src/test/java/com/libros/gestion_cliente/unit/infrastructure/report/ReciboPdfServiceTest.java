@@ -95,4 +95,32 @@ class ReciboPdfServiceTest {
         assertThatThrownBy(() -> reciboPdfService.generarReciboCuota(99L))
                 .isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void generarReciboCuota_DeberiaCapturarExcepcion_Y_LanzarRuntimeException() {
+        // GIVEN: Preparamos el escenario para el sabotaje
+
+        // 1. Mockeamos Venta y Cuota (en lugar de usar .builder())
+        // Esto nos permite obligar a que sus métodos lancen excepciones
+        Venta ventaMock = org.mockito.Mockito.mock(Venta.class);
+        Cuota cuotaMock = org.mockito.Mockito.mock(Cuota.class);
+
+        // 2. Configuramos lo básico para que pase las líneas ANTES del try
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuotaMock));
+        when(cuotaMock.getVenta()).thenReturn(ventaMock);
+        when(ventaMock.getId()).thenReturn(100L); // Necesario para findByVentaId
+        when(cuotaRepository.findByVentaId(100L)).thenReturn(List.of(cuotaMock));
+
+        // 3. EL SABOTAJE:
+        // Cuando el código entre al try y llame a venta.getCliente(), ¡PUM! Excepción.
+        // Esto ocurre justo en la línea: "Recibí de: " + venta.getCliente().getNombre()...
+        when(ventaMock.getCliente()).thenThrow(new RuntimeException("Error inesperado al leer datos"));
+
+        // WHEN & THEN
+        // Verificamos que el servicio atrape esa excepción interna y lance la nuestra
+        assertThatThrownBy(() -> reciboPdfService.generarReciboCuota(1L))
+                .isInstanceOf(RuntimeException.class) // La excepción envoltorio
+                .hasMessage("Error al generar PDF")   // Tu mensaje personalizado
+                .hasCauseInstanceOf(RuntimeException.class); // La causa original
+    }
 }
