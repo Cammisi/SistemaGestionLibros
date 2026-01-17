@@ -6,13 +6,14 @@ import com.libros.gestion_cliente.domain.model.EstadoCuota;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CuotaController.class)
 class CuotaControllerTest {
@@ -22,6 +23,9 @@ class CuotaControllerTest {
 
     @MockitoBean
     private CuotaService cuotaService;
+
+    @MockitoBean
+    private com.libros.gestion_cliente.infrastructure.report.ReciboPdfService reciboPdfService;
 
     // --- TEST 1: PAGO EXITOSO (200 OK) ---
     @Test
@@ -62,5 +66,18 @@ class CuotaControllerTest {
         mockMvc.perform(post("/api/cuotas/{id}/pagar", cuotaId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Recurso no encontrado"));
+    }
+
+    @Test
+    void descargarRecibo_DeberiaRetornarPDF() throws Exception {
+        Long cuotaId = 1L;
+        byte[] dummyPdf = new byte[]{1, 2, 3}; // Simulo un PDF
+
+        when(reciboPdfService.generarReciboCuota(cuotaId)).thenReturn(dummyPdf);
+
+        mockMvc.perform(get("/api/cuotas/{id}/recibo", cuotaId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"recibo_cuota_1.pdf\""));
     }
 }

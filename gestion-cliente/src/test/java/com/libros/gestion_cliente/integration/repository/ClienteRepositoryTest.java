@@ -2,6 +2,7 @@ package com.libros.gestion_cliente.integration.repository;
 
 import com.libros.gestion_cliente.domain.model.Cliente;
 import com.libros.gestion_cliente.domain.model.Familiar;
+import com.libros.gestion_cliente.domain.model.Venta;
 import com.libros.gestion_cliente.domain.repository.ClienteRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // Usar Docker, no H2
 class ClienteRepositoryTest {
+    // Importa las clases necesarias (Venta, EstadoVenta)
+    @Autowired
+    private com.libros.gestion_cliente.domain.repository.VentaRepository ventaRepository;
 
     // Definimos el contenedor de Postgres para el test
     @Container
@@ -81,5 +85,34 @@ class ClienteRepositoryTest {
         // THEN
         assertThat(existe).isTrue();
         assertThat(noExiste).isFalse();
+    }
+
+    @Test
+    void findClientesLibresDeDeuda_DeberiaRetornarSoloClientesSinVentasEnProceso() {
+        // 1. Cliente DEUDOR (Tiene venta EN_PROCESO)
+        Cliente deudor = Cliente.builder().dni("111").nombre("Deudor").apellido("D").build();
+        deudor = clienteRepository.save(deudor);
+
+        Venta ventaDeuda = Venta.builder().cliente(deudor).estado(com.libros.gestion_cliente.domain.model.EstadoVenta.EN_PROCESO).nroFactura("F1").build();
+        ventaRepository.save(ventaDeuda);
+
+        // 2. Cliente LIBRE (Tiene venta FINALIZADA)
+        Cliente libre = Cliente.builder().dni("222").nombre("Libre").apellido("L").build();
+        libre = clienteRepository.save(libre);
+
+        Venta ventaPagada = Venta.builder().cliente(libre).estado(com.libros.gestion_cliente.domain.model.EstadoVenta.FINALIZADA).nroFactura("F2").build();
+        ventaRepository.save(ventaPagada);
+
+        // 3. Cliente NUEVO (Sin ventas, también es libre de deuda técnicamente)
+        Cliente nuevo = Cliente.builder().dni("333").nombre("Nuevo").apellido("N").build();
+        clienteRepository.save(nuevo);
+
+        // WHEN
+        var libres = clienteRepository.findClientesLibresDeDeuda();
+
+        // THEN
+        // Debería traer a 'Libre' y a 'Nuevo'. NO a 'Deudor'.
+        assertThat(libres).extracting("dni").contains("222", "333");
+        assertThat(libres).extracting("dni").doesNotContain("111");
     }
 }

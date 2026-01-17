@@ -19,4 +19,7 @@ public interface VentaRepository {
     Optional<Venta> findByNroFactura(String nroFactura);
     // Buscar si el cliente tiene alguna venta activa (EN_PROCESO o PAGANDO)
     boolean existsByClienteIdAndEstado(Long clienteId, EstadoVenta estado);
+
+    // Para ver el historial de compras de un cliente
+    List<Venta> findByClienteId(Long clienteId);
 }
