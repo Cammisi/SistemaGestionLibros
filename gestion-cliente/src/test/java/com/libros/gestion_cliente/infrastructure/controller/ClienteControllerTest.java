@@ -10,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -85,14 +87,23 @@ class ClienteControllerTest {
 
     // --- TEST 4: LISTAR CLIENTES (200) ---
     @Test
-    void listarClientes_DeberiaRetornarLista() throws Exception {
-        when(clienteService.listarClientes()).thenReturn(List.of(new Cliente(), new Cliente()));
+    void listarClientes_DeberiaRetornarPagina() throws Exception {
+        // GIVEN
+        Cliente cliente = Cliente.builder().id(1L).dni("123").nombre("Test").build();
+        // Simulamos una página de respuesta
+        when(clienteService.listarClientes(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(cliente)));
 
-        mockMvc.perform(get("/api/clientes"))
+        // WHEN & THEN
+        mockMvc.perform(get("/api/clientes")
+                        .param("page", "0")
+                        .param("size", "10")) // Opcional, Spring usa defaults
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                // OJO: Al ser paginado, los datos están dentro de "content"
+                .andExpect(jsonPath("$.content[0].dni").value("123"))
+                .andExpect(jsonPath("$.content[0].nombre").value("Test"));
     }
-
+    
     // --- TEST 5: BUSCAR POR DNI (200) ---
     @Test
     void buscarPorDni_DeberiaRetornarCliente_CuandoExiste() throws Exception {

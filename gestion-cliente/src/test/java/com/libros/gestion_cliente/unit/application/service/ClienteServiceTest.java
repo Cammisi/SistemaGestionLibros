@@ -9,6 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,12 +75,21 @@ class ClienteServiceTest {
 
     // --- 3. Listar Clientes ---
     @Test
-    void listarClientes_DeberiaRetornarLista() {
-        when(clienteRepository.findAll()).thenReturn(List.of(new Cliente(), new Cliente()));
+    void listarClientes_DeberiaRetornarPagina() {
+        // GIVEN
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Cliente> clientes = List.of(new Cliente());
+        // El repositorio ahora espera findAll(Pageable)
+        when(clienteRepository.findAll(pageable)).thenReturn(new PageImpl<>(clientes));
 
-        List<Cliente> lista = clienteService.listarClientes();
+        // WHEN
+        // Llamamos al servicio con el pageable
+        Page<Cliente> resultado = clienteService.listarClientes(pageable);
 
-        assertThat(lista).hasSize(2);
+        // THEN
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getContent()).hasSize(1);
+        verify(clienteRepository).findAll(pageable);
     }
 
     // --- 4. Buscar por DNI: Encontrado ---
