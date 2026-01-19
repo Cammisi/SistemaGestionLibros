@@ -3,8 +3,14 @@ package com.libros.gestion_cliente.application.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CrearClienteRequest {
 
     @NotBlank(message = "El nombre es obligatorio")

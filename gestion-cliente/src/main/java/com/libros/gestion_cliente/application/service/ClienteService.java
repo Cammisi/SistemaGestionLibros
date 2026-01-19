@@ -4,11 +4,10 @@ import com.libros.gestion_cliente.application.dto.CrearClienteRequest;
 import com.libros.gestion_cliente.domain.model.Cliente;
 import com.libros.gestion_cliente.domain.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,28 +17,26 @@ public class ClienteService {
 
     @Transactional
     public Cliente crearCliente(CrearClienteRequest request) {
-        // Regla: No duplicar DNI
         if (clienteRepository.existsByDni(request.getDni())) {
             throw new IllegalArgumentException("Ya existe un cliente con el DNI: " + request.getDni());
         }
 
         Cliente cliente = Cliente.builder()
+                .dni(request.getDni())
                 .nombre(request.getNombre())
                 .apellido(request.getApellido())
-                .dni(request.getDni())
                 .direccion(request.getDireccion())
-                .telefono(request.getTelefono())
                 .localidad(request.getLocalidad())
+                .telefono(request.getTelefono())
                 .interesesPersonales(request.getInteresesPersonales())
-                .fechaAlta(LocalDate.now()) // Fecha automática
                 .build();
 
         return clienteRepository.save(cliente);
     }
 
     @Transactional(readOnly = true)
-    public List<Cliente> listarClientes() {
-        return clienteRepository.findAll();
+    public Page<Cliente> listarClientes(Pageable pageable) {
+        return clienteRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)

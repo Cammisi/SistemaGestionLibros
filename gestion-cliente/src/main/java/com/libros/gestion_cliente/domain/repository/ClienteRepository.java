@@ -1,6 +1,8 @@
 package com.libros.gestion_cliente.domain.repository;
 
 import com.libros.gestion_cliente.domain.model.Cliente;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +12,7 @@ public interface ClienteRepository {
     Optional<Cliente> findById(Long id);
     Optional<Cliente> findByDni(String dni);
     List<Cliente> findAll();
+    Page<Cliente> findAll(Pageable pageable);
     void deleteById(Long id);
     boolean existsByDni(String dni);
     // Búsqueda flexible (ej: "Santa" encuentra "Santa Fe")

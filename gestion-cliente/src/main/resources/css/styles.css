@@ -1,0 +1,162 @@
+/* Contenedor principal */
+.root {
+  -fx-background-color: #3c3c3c;
+}
+
+/* BorderPane principal */
+BorderPane {
+  -fx-background-color: #3c3c3c;
+}
+
+/* Label del título */
+Label {
+  -fx-text-fill: white;
+  -fx-font-size: 24px;
+  -fx-font-weight: bold;
+  -fx-padding: 0 0 20 0;
+}
+
+/* Botones del menú */
+Button {
+  -fx-background-color: #2b2b2b;
+  -fx-text-fill: white;
+  -fx-font-size: 14px;
+  -fx-font-weight: bold;
+  -fx-pref-width: 250; /* Aumenté un poco el ancho para que el texto quepa bien */
+  -fx-pref-height: 45;
+  -fx-border-color: #555555;
+  -fx-border-width: 1;
+  -fx-border-radius: 5;
+  -fx-background-radius: 5;
+  -fx-cursor: hand;
+}
+
+/* Efecto hover para botones */
+Button:hover {
+  -fx-background-color: #404040;
+  -fx-border-color: #777777;
+  -fx-text-fill: #ffd700;
+}
+
+/* Efecto al presionar botón */
+Button:pressed {
+  -fx-background-color: #1a1a1a;
+  -fx-border-color: #999999;
+}
+
+/* Efecto de foco */
+Button:focused {
+  -fx-border-color: #ffd700;
+  -fx-border-width: 2;
+}
+
+/* --- CLASE EXTRA PARA EL BOTÓN DE VENTA --- */
+.boton-verde {
+  -fx-background-color: #2e7d32; /* Verde base */
+  -fx-border-color: #1b5e20;
+}
+.boton-verde:hover {
+  -fx-background-color: #1b5e20; /* <--- AHORA ES MÁS OSCURO */
+  -fx-border-color: #003300;
+  -fx-text-fill: #ffd700; /* Letras doradas al pasar el mouse */
+}
+
+/* ===== ESTILOS PARA TABLEVIEW (Preparado para después) ===== */
+
+/* TableView principal */
+.table-view {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #555555;
+  -fx-border-width: 1;
+  -fx-border-radius: 8;
+  -fx-background-radius: 8;
+  -fx-table-cell-border-color: transparent;
+}
+
+/* Área de contenido de la tabla */
+.table-view .virtual-flow .clipped-container .sheet .table-row-cell {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: transparent;
+}
+
+/* Filas alternas */
+.table-view .virtual-flow .clipped-container .sheet .table-row-cell:filled:odd {
+  -fx-background-color: #333333;
+}
+
+.table-view .virtual-flow .clipped-container .sheet .table-row-cell:filled:even {
+  -fx-background-color: #2b2b2b;
+}
+
+/* Fila seleccionada */
+.table-view .virtual-flow .clipped-container .sheet .table-row-cell:selected {
+  -fx-background-color: #4a4a4a !important;
+  -fx-border-color: #ffd700;
+  -fx-border-width: 1;
+}
+
+/* Fila hover */
+.table-view .virtual-flow .clipped-container .sheet .table-row-cell:hover {
+  -fx-background-color: #404040 !important;
+}
+
+/* Encabezados de columna */
+.table-view .column-header-background {
+  -fx-background-color: #1a1a1a;
+  -fx-border-color: #555555;
+  -fx-border-width: 0 0 2 0;
+}
+
+.table-view .column-header {
+  -fx-background-color: #1a1a1a;
+  -fx-text-fill: #ffd700;
+  -fx-font-weight: bold;
+  -fx-font-size: 13px;
+  -fx-border-color: #444444;
+  -fx-border-width: 0 1 0 0;
+  -fx-padding: 8 12 8 12;
+}
+
+.table-view .column-header:hover {
+  -fx-background-color: #2a2a2a;
+}
+
+/* Texto de las celdas */
+.table-view .table-cell {
+  -fx-text-fill: white;
+  -fx-font-size: 12px;
+  -fx-padding: 8 12 8 12;
+  -fx-border-color: transparent;
+}
+
+/* Scrollbars */
+.table-view .scroll-bar:vertical {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #555555;
+  -fx-border-width: 1 0 1 1;
+  -fx-pref-width: 12;
+}
+
+.table-view .scroll-bar:horizontal {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #555555;
+  -fx-border-width: 1 1 0 1;
+  -fx-pref-height: 12;
+}
+
+.table-view .scroll-bar .thumb {
+  -fx-background-color: #555555;
+  -fx-background-radius: 6;
+}
+
+.table-view .scroll-bar .thumb:hover {
+  -fx-background-color: #666666;
+}
+
+.table-view .scroll-bar .thumb:pressed {
+  -fx-background-color: #777777;
+}
+
+.table-view .corner {
+  -fx-background-color: #2b2b2b;
+}
