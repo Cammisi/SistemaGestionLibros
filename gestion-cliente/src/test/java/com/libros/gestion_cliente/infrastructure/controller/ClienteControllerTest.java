@@ -103,7 +103,7 @@ class ClienteControllerTest {
                 .andExpect(jsonPath("$.content[0].dni").value("123"))
                 .andExpect(jsonPath("$.content[0].nombre").value("Test"));
     }
-    
+
     // --- TEST 5: BUSCAR POR DNI (200) ---
     @Test
     void buscarPorDni_DeberiaRetornarCliente_CuandoExiste() throws Exception {
