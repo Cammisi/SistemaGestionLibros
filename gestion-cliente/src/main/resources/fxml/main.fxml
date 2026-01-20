@@ -26,12 +26,16 @@
     <Label text="Sistema de Gestión"
            style="-fx-font-size: 16px; -fx-text-fill: #aaaaaa; -fx-padding: 0 0 30 0;" />
 
-    <Button text="Gestión de Clientes" onAction="#irAClientes"/>
+    <Button text="Gestión de Clientes" onAction="#irAClientes" maxWidth="300" prefHeight="50"/>
 
-    <Button text="Gestión de Libros" onAction="#irALibros"/>
+    <Button text="Gestión de Libros" onAction="#irALibros" maxWidth="300" prefHeight="50"/>
 
-    <Button text="Nueva Venta" onAction="#irAVentas" styleClass="boton-verde"/>
+    <Button text="Nueva Venta" onAction="#irAVentas" styleClass="boton-verde" maxWidth="300" prefHeight="50"/>
 
-    <Button text="Estrategia y Listados" onAction="#irAEstrategia"/>
+    <Button text="Historial de Ventas" onAction="#irAHistorial" maxWidth="300" prefHeight="50"/>
+
+    <Button text="Reportes y Cobranzas" onAction="#irAReportes" maxWidth="300" prefHeight="50"/>
+
+    <Button text="Estrategia y Listados" onAction="#irAEstrategia" maxWidth="300" prefHeight="50"/>
 
 </VBox>

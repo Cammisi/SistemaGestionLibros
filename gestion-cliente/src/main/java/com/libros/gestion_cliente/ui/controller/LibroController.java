@@ -2,20 +2,14 @@ package com.libros.gestion_cliente.ui.controller;
 
 import com.libros.gestion_cliente.application.service.LibroService;
 import com.libros.gestion_cliente.domain.model.Libro;
-import com.libros.gestion_cliente.ui.model.LibroFx;
-import com.libros.gestion_cliente.ui.util.NotificationUtil; // Asegúrate de importar esto
-import javafx.animation.FadeTransition;
-import javafx.collections.FXCollections;
-import javafx.concurrent.Task;
+import com.libros.gestion_cliente.domain.repository.LibroRepository;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -25,125 +19,84 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 
 @Component("libroFxController")
 @RequiredArgsConstructor
 public class LibroController {
 
     private final LibroService libroService;
-    private final ApplicationContext applicationContext; // Para navegar
+    private final LibroRepository libroRepository;
+    private final ApplicationContext applicationContext;
 
-    @FXML private BorderPane rootPane;
-    @FXML private TableView<LibroFx> tablaLibros;
-    @FXML private TableColumn<LibroFx, String> colIsbn;
-    @FXML private TableColumn<LibroFx, String> colTitulo;
-    @FXML private TableColumn<LibroFx, String> colAutor;
-    @FXML private TableColumn<LibroFx, BigDecimal> colPrecio;
-    @FXML private TableColumn<LibroFx, Integer> colStock;
+    @FXML private BorderPane rootPane; // Asegúrate que en el FXML el root se llame fx:id="rootPane"
+    @FXML private TableView<Libro> tablaLibros;
+    // ... tus columnas ...
+    @FXML private TableColumn<Libro, String> colIsbn;
+    @FXML private TableColumn<Libro, String> colTitulo;
+    @FXML private TableColumn<Libro, String> colAutor;
+    @FXML private TableColumn<Libro, String> colTematica;
+    @FXML private TableColumn<Libro, Double> colPrecio;
+    @FXML private TableColumn<Libro, Integer> colStock;
+    @FXML private TableColumn<Libro, Void> colAccionStock;
+
     @FXML private Label lblPagina;
 
-    // Inyectar del FXML el spinner
-    @FXML private ProgressIndicator spinnerCarga;
-
     private int paginaActual = 0;
-    private final int TAMANO_PAGINA = 15;
-    private int totalPaginas = 0;
+    private int totalPaginas = 0; // <--- NUEVA VARIABLE DE CONTROL
+    private final int TAMANO_PAGINA = 10;
 
     @FXML
     public void initialize() {
-        // Configurar columnas
-        colIsbn.setCellValueFactory(cellData -> cellData.getValue().getIsbn());
-        colTitulo.setCellValueFactory(cellData -> cellData.getValue().getTitulo());
-        colAutor.setCellValueFactory(cellData -> cellData.getValue().getAutor());
-        colPrecio.setCellValueFactory(cellData -> cellData.getValue().getPrecio());
-        colStock.setCellValueFactory(cellData -> cellData.getValue().getStock().asObject());
-
-        // Efectos de transición al entrar
-        rootPane.setOpacity(0);
-        FadeTransition fadeOut = new FadeTransition(javafx.util.Duration.millis(600), rootPane);
-        fadeOut.setFromValue(0);
-        fadeOut.setToValue(1);
-        fadeOut.play();
-
-        // Cargar datos
+        configurarTabla();
         cargarLibros();
     }
 
-    private void cargarLibros() {
-        // 1. Mostrar Spinner
-        spinnerCarga.setVisible(true);
-        tablaLibros.setDisable(true); // Evitar clics mientras carga
+    private void configurarTabla() {
+        // ... (Tu configuración de columnas igual que antes) ...
+        colIsbn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getIsbn()));
+        colTitulo.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTitulo()));
+        colAutor.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getAutor()));
+        colTematica.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTematica() != null ? cell.getValue().getTematica() : "-"));
+        colPrecio.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getPrecioBase().doubleValue()));
+        colStock.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getStock()));
 
-        // 2. Crear Tarea en Segundo Plano (Background Thread)
-        Task<Page<Libro>> task = new Task<>() {
-            @Override
-            protected Page<Libro> call() throws Exception {
-                // Esto ocurre en otro hilo, no congela la UI
-                // Simulo retardo para que veas el efecto (borrar en prod si se desea)
-                Thread.sleep(500);
-                return libroService.listarLibros(PageRequest.of(paginaActual, TAMANO_PAGINA));
+        colAccionStock.setCellFactory(param -> new TableCell<>() {
+            private final Button btnSumar = new Button("+1");
+            {
+                btnSumar.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+                btnSumar.setOnAction(event -> {
+                    Libro libro = getTableView().getItems().get(getIndex());
+                    sumarStock(libro);
+                });
             }
-        };
-
-        // 3. Cuando termina la tarea (Éxito)
-        task.setOnSucceeded(e -> {
-            Page<Libro> pagina = task.getValue();
-            this.totalPaginas = pagina.getTotalPages();
-
-            var librosFx = pagina.getContent().stream()
-                    .map(LibroFx::new)
-                    .toList();
-
-            tablaLibros.setItems(FXCollections.observableArrayList(librosFx));
-
-            // Ajuste visual para el texto de paginación
-            lblPagina.setText("Página " + (paginaActual + 1) + " de " + Math.max(1, totalPaginas));
-
-            // Ocultar spinner
-            spinnerCarga.setVisible(false);
-            tablaLibros.setDisable(false);
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btnSumar);
+            }
         });
+    }
 
-        // 4. Si falla
-        task.setOnFailed(e -> {
-            spinnerCarga.setVisible(false);
-            tablaLibros.setDisable(false);
-            e.getSource().getException().printStackTrace();
-            mostrarNotificacion("Error", "No se pudieron cargar los libros", true);
-        });
+    private void sumarStock(Libro libro) {
+        libro.setStock(libro.getStock() + 1);
+        libroRepository.save(libro);
+        tablaLibros.refresh();
+    }
 
-        // 5. Arrancar el hilo
-        new Thread(task).start();
+    private void cargarLibros() {
+        Page<Libro> pagina = libroService.listarLibros(PageRequest.of(paginaActual, TAMANO_PAGINA));
+
+        this.totalPaginas = pagina.getTotalPages(); // <--- ACTUALIZAMOS EL TOTAL REAL
+
+        tablaLibros.getItems().setAll(pagina.getContent());
+
+        // Evitar "Página 1 de 0" si está vacío
+        int displayTotal = totalPaginas > 0 ? totalPaginas : 1;
+        lblPagina.setText("Página " + (paginaActual + 1) + " de " + displayTotal);
     }
 
     @FXML
-    public void agregarLibro(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/libro_form.fxml"));
-            loader.setControllerFactory(applicationContext::getBean);
-            Parent root = loader.load();
-
-            // Configurar el callback para recargar la tabla al guardar
-            LibroFormController controller = loader.getController();
-            controller.setOnSaveSuccess(this::cargarLibros);
-
-            // Crear ventana modal
-            Stage modalStage = new Stage();
-            modalStage.setTitle("Nuevo Libro");
-            modalStage.setScene(new Scene(root));
-            modalStage.initModality(javafx.stage.Modality.WINDOW_MODAL); // Bloquea la ventana de atrás
-            modalStage.initOwner(tablaLibros.getScene().getWindow()); // Asigna padre
-            modalStage.setResizable(false);
-            modalStage.showAndWait();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    public void paginaAnterior(ActionEvent event) {
+    public void anterior() {
         if (paginaActual > 0) {
             paginaActual--;
             cargarLibros();
@@ -151,8 +104,9 @@ public class LibroController {
     }
 
     @FXML
-    public void paginaSiguiente(ActionEvent event) {
-        if (paginaActual < totalPaginas - 1) { // <--- SOLO AVANZA SI NO ES LA ÚLTIMA
+    public void siguiente() {
+        // CORRECCIÓN: Solo avanza si NO es la última página (recordar que es índice 0)
+        if (paginaActual < totalPaginas - 1) {
             paginaActual++;
             cargarLibros();
         }
@@ -160,26 +114,25 @@ public class LibroController {
 
     @FXML
     public void volverAlMenu(ActionEvent event) {
+        navegar("/fxml/main.fxml");
+    }
+
+    @FXML
+    public void irANuevoLibro(ActionEvent event) {
+        navegar("/fxml/libro_form.fxml");
+    }
+
+    private void navegar(String fxmlPath) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             loader.setControllerFactory(applicationContext::getBean);
             Parent root = loader.load();
 
-            Stage stage = (Stage) rootPane.getScene().getWindow();
-            Scene scene = stage.getScene();
-
-            scene.setRoot(root);
-
-            stage.setTitle("Fernando Libros - Sistema de Gestión");
+            // Usamos tablaLibros para obtener la escena porque siempre está visible
+            Stage stage = (Stage) tablaLibros.getScene().getWindow();
+            stage.getScene().setRoot(root);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    // Método auxiliar para usar NotificationUtil
-    private void mostrarNotificacion(String titulo, String mensaje, boolean isError) {
-        if (rootPane != null && rootPane.getScene() != null) {
-            NotificationUtil.show(titulo, mensaje, isError, (Stage) rootPane.getScene().getWindow());
         }
     }
 }

@@ -1,3 +1,7 @@
+/* =========================================
+   ESTILOS GENERALES (CONTENEDORES Y TEXTO)
+   ========================================= */
+
 /* Contenedor principal */
 .root {
   -fx-background-color: #3c3c3c;
@@ -8,7 +12,7 @@ BorderPane {
   -fx-background-color: #3c3c3c;
 }
 
-/* Label del título */
+/* Label del título (Títulos generales) */
 Label {
   -fx-text-fill: white;
   -fx-font-size: 24px;
@@ -16,13 +20,16 @@ Label {
   -fx-padding: 0 0 20 0;
 }
 
-/* Botones del menú */
+/* =========================================
+   ESTILOS DE BOTONES
+   ========================================= */
+
 Button {
   -fx-background-color: #2b2b2b;
   -fx-text-fill: white;
   -fx-font-size: 14px;
   -fx-font-weight: bold;
-  -fx-pref-width: 250; /* Aumenté un poco el ancho para que el texto quepa bien */
+  -fx-pref-width: 250;
   -fx-pref-height: 45;
   -fx-border-color: #555555;
   -fx-border-width: 1;
@@ -50,18 +57,21 @@ Button:focused {
   -fx-border-width: 2;
 }
 
-/* --- CLASE EXTRA PARA EL BOTÓN DE VENTA --- */
+/* Botón Verde (Acciones principales) */
 .boton-verde {
-  -fx-background-color: #2e7d32; /* Verde base */
+  -fx-background-color: #2e7d32;
   -fx-border-color: #1b5e20;
 }
+
 .boton-verde:hover {
-  -fx-background-color: #1b5e20; /* <--- AHORA ES MÁS OSCURO */
+  -fx-background-color: #1b5e20;
   -fx-border-color: #003300;
-  -fx-text-fill: #ffd700; /* Letras doradas al pasar el mouse */
+  -fx-text-fill: #ffd700;
 }
 
-/* ===== ESTILOS PARA TABLEVIEW (Preparado para después) ===== */
+/* =========================================
+   ESTILOS PARA TABLEVIEW (TABLAS)
+   ========================================= */
 
 /* TableView principal */
 .table-view {
@@ -79,7 +89,7 @@ Button:focused {
   -fx-border-color: transparent;
 }
 
-/* Filas alternas */
+/* Filas alternas (Zebra stripes) */
 .table-view .virtual-flow .clipped-container .sheet .table-row-cell:filled:odd {
   -fx-background-color: #333333;
 }
@@ -129,7 +139,17 @@ Button:focused {
   -fx-border-color: transparent;
 }
 
-/* Scrollbars */
+/* Placeholder de tabla vacía */
+.table-view .placeholder {
+  -fx-background-color: #2b2b2b;
+}
+
+.table-view .placeholder .label {
+  -fx-text-fill: white;
+  -fx-font-size: 16px;
+}
+
+/* Scrollbars de la tabla */
 .table-view .scroll-bar:vertical {
   -fx-background-color: #2b2b2b;
   -fx-border-color: #555555;
@@ -158,5 +178,137 @@ Button:focused {
 }
 
 .table-view .corner {
+  -fx-background-color: #2b2b2b;
+}
+
+/* =========================================
+   ESTILOS PARA COMBOBOX (FONDO OSCURO)
+   ========================================= */
+
+/* ComboBox en estado normal */
+.combo-box {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #555555;
+  -fx-border-width: 1;
+  -fx-border-radius: 3;
+  -fx-background-radius: 3;
+}
+
+/* Área del texto del ComboBox */
+.combo-box .list-cell {
+  -fx-background-color: #2b2b2b;
+  -fx-text-fill: white;
+}
+
+/* Flecha del ComboBox */
+.combo-box .arrow-button {
+  -fx-background-color: #404040;
+}
+
+.combo-box .arrow {
+  -fx-background-color: white;
+}
+
+/* Popup del ComboBox */
+.combo-box-popup .list-view {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #555555;
+}
+
+.combo-box-popup .list-view .list-cell {
+  -fx-background-color: #2b2b2b;
+  -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+  -fx-background-color: #404040;
+}
+
+.combo-box-popup .list-view .list-cell:selected {
+  -fx-background-color: #2e7d32;
+  -fx-text-fill: white;
+}
+
+/* =========================================
+   ESTILOS PARA TEXTFIELD (FONDO OSCURO)
+   ========================================= */
+
+.text-field {
+  -fx-background-color: #2b2b2b;
+  -fx-text-fill: white;
+  -fx-border-color: #555555;
+  -fx-border-width: 1;
+  -fx-border-radius: 3;
+  -fx-background-radius: 3;
+  -fx-prompt-text-fill: #888888;
+}
+
+.text-field:focused {
+  -fx-border-color: #ffd700;
+  -fx-border-width: 2;
+}
+
+/* =========================================
+   ESTILOS PARA GRÁFICOS (CHARTS)
+   ========================================= */
+
+/* Color del texto en la leyenda */
+.chart-legend-item {
+  -fx-text-fill: black;
+  -fx-font-weight: bold;
+}
+
+/* Fondo de la leyenda */
+.chart-legend {
+  -fx-background-color: #f4f4f4;
+  -fx-padding: 10px;
+  -fx-background-radius: 5px;
+}
+
+/* =========================================================
+   ESTILOS DE PESTAÑAS (TABS)
+   ========================================================= */
+
+/* 1. Fondo del área de cabecera */
+.tab-pane .tab-header-area .tab-header-background {
+  -fx-background-color: #2b2b2b;
+}
+
+/* 2. Pestaña en estado NORMAL (Inactiva) */
+.tab-pane .tab {
+  -fx-background-color: #404040;
+  -fx-border-color: #555555;
+}
+
+/* 3. Pestaña en estado SELECCIONADO (Activa) */
+.tab-pane .tab:selected {
+  -fx-background-color: #2b2b2b;
+  -fx-border-color: #ffd700;
+  -fx-border-width: 2 2 0 2;
+}
+
+/* 4. Efecto Hover en la pestaña */
+.tab-pane .tab:hover {
+  -fx-background-color: #4a4a4a;
+}
+
+/* 5. TEXTO DE LA ETIQUETA (blanco) */
+.tab-pane .tab .tab-label {
+  -fx-text-fill: white !important;
+  -fx-font-weight: bold;
+  -fx-font-size: 14px;
+}
+
+/* Forzar color blanco en todos los textos de las pestañas */
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+  -fx-text-fill: white !important;
+}
+
+.tab-pane .tab Text {
+  -fx-fill: white !important;
+}
+
+/* 6. Contenido de las pestañas */
+.tab-pane .tab-content-area {
   -fx-background-color: #2b2b2b;
 }

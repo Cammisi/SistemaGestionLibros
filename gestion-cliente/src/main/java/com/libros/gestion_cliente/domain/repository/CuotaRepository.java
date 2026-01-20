@@ -15,4 +15,5 @@ public interface CuotaRepository {
     List<Cuota> findByVentaId(Long ventaId);
     List<Cuota> findByEstado(EstadoCuota estado);
     long countByVentaIdAndEstado(Long ventaId, EstadoCuota estado);
+    List<Cuota> findByClienteId(Long clienteId);
 }

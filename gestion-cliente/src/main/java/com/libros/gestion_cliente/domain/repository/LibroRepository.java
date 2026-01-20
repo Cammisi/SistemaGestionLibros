@@ -11,6 +11,7 @@ public interface LibroRepository {
     <S extends Libro> List<S> saveAll(Iterable<S> libros);
     Optional<Libro> findById(Long id);
     Optional<Libro> findByIsbn(String isbn);
+    Optional<Libro> findByTituloIgnoreCase(String titulo);
     List<Libro> findAll();
     void deleteById(Long id);
     boolean existsByIsbn(String isbn);

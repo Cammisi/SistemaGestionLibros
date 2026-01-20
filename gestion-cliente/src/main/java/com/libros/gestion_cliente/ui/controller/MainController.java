@@ -43,12 +43,23 @@ public class MainController {
 
     @FXML
     public void irAVentas(ActionEvent event) {
-        System.out.println("Navegando a Ventas... (Pantalla aún no creada)");
+        navegar(event, "/fxml/ventas.fxml", "Nueva Venta");
     }
 
     @FXML
     public void irAEstrategia(ActionEvent event) {
-        System.out.println("Navegando a Estrategia... (Pantalla aún no creada)");
+        navegar(event, "/fxml/estrategia.fxml", "Tablero de Estrategia");
+    }
+
+    @FXML
+    public void irAHistorial(ActionEvent event) {
+        navegar(event, "/fxml/historial_ventas.fxml", "Historial de Ventas");
+    }
+
+    @FXML
+    public void irAReportes(ActionEvent event) {
+        // Reutilizamos tu método 'navegar' que ya carga el FXML y gestiona la ventana
+        navegar(event, "/fxml/reportes.fxml", "Gestión de Reportes y Cobranzas");
     }
 
     // --- MÉTODO REUTILIZABLE PARA NAVEGAR ---

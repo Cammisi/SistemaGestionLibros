@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClienteJpaRepository extends JpaRepository<Cliente, Long>, ClienteRepository {
-    // Spring Data implementa automáticamente los métodos de la interfaz
-    // gracias a que los nombres coinciden (save, findById, etc.)
+    // No necesitas re-escribir nada aquí.
+    // Spring Data ve que 'ClienteRepository' tiene una @Query en 'findClientesLibresDeDeuda'
+    // y la implementa automáticamente al arrancar.
+    // También implementa 'findByInteresesPersonalesContainingIgnoreCase' analizando el nombre.
 }
