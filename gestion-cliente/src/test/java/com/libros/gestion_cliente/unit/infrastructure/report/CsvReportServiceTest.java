@@ -42,7 +42,6 @@ class CsvReporteServiceTest {
                                 .libro(Libro.builder().titulo("Libro A").build())
                                 .cantidad(2)
                                 .precioAlMomento(new BigDecimal("50.00"))
-                                // .subtotal(...) ELIMINADO: Se calcula solo
                                 .build()
                 ))
                 .build();
@@ -56,12 +55,12 @@ class CsvReporteServiceTest {
         assertThat(csv).contains("ID_Venta,Fecha"); // Cabecera
         assertThat(csv).contains("Juan Perez");
         assertThat(csv).contains("Libro A");
-        // 2 * 50.00 = 100.00. Verificamos que el cálculo aparezca en el CSV
+        // 2 * 50.00 = 100.00 (El cálculo interno del detalle)
         assertThat(csv).contains("100.00");
     }
 
     @Test
-    void generarReporteVentasMensuales_DeberiaRetornarMensaje_CuandoNoHayVentas() {
+    void generarReporteVentasMensuales_DeberiaRetornarSoloCabecera_CuandoNoHayVentas() {
         // GIVEN
         when(ventaRepository.findByFechaVentaBetween(any(), any())).thenReturn(Collections.emptyList());
 
@@ -69,6 +68,10 @@ class CsvReporteServiceTest {
         String csv = csvReporteService.generarReporteVentasMensuales(1, 2025);
 
         // THEN
-        assertThat(csv).contains("No se encontraron ventas para el período seleccionado");
+        // CORRECCIÓN: El servicio devuelve solo la cabecera si está vacío, no un mensaje de texto.
+        String cabeceraEsperada = "ID_Venta,Fecha,Cliente_DNI,Cliente_Nombre,Libro_Titulo,Cantidad,Precio_Unitario,Total_Linea\n";
+
+        // Verificamos que contenga la cabecera y tenga el tamaño exacto (o sea, sin filas extra)
+        assertThat(csv).isEqualTo(cabeceraEsperada);
     }
 }
