@@ -30,17 +30,18 @@
         <HBox spacing="20" style="-fx-padding: 20;">
             <VBox style="-fx-background-color: #3c3c3c; -fx-background-radius: 10;" HBox.hgrow="ALWAYS" alignment="CENTER">
                 <Label text="Top 5 Libros Más Vendidos" style="-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 10;"/>
-                <PieChart fx:id="pieLibros" legendVisible="true" labelsVisible="false" VBox.vgrow="ALWAYS"/>
+
+                <PieChart fx:id="pieLibros" legendVisible="false" labelsVisible="true" VBox.vgrow="ALWAYS" styleClass="grafico-torta-oscuro"/>
             </VBox>
 
             <VBox style="-fx-background-color: #3c3c3c; -fx-background-radius: 10;" HBox.hgrow="ALWAYS" alignment="CENTER">
                 <Label text="Mejores Clientes (Por Monto)" style="-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 10;"/>
                 <BarChart fx:id="barClientes" legendVisible="false" VBox.vgrow="ALWAYS">
                     <xAxis>
-                        <CategoryAxis label="Cliente" style="-fx-tick-label-fill: white;"/>
+                        <CategoryAxis label="Cliente" style="-fx-tick-label-fill: white; -fx-text-fill: white;"/>
                     </xAxis>
                     <yAxis>
-                        <NumberAxis label="Monto ($)" style="-fx-tick-label-fill: white;"/>
+                        <NumberAxis label="Monto ($)" style="-fx-tick-label-fill: white; -fx-text-fill: white;"/>
                     </yAxis>
                 </BarChart>
             </VBox>

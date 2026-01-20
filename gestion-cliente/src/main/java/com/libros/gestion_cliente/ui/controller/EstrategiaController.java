@@ -9,7 +9,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
@@ -27,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EstrategiaController {
 
-    private final VentaRepository ventaRepository; // Inyección directa para rapidez (o crea un ReporteService)
+    private final VentaRepository ventaRepository;
     private final ApplicationContext applicationContext;
 
     @FXML private BorderPane rootPane;
@@ -36,7 +35,6 @@ public class EstrategiaController {
 
     @FXML
     public void initialize() {
-        // Animación de entrada
         rootPane.setOpacity(0);
         FadeTransition fade = new FadeTransition(Duration.millis(800), rootPane);
         fade.setFromValue(0);
@@ -53,9 +51,12 @@ public class EstrategiaController {
         ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
 
         for (ReporteItem item : topLibros) {
-            pieData.add(new PieChart.Data(item.getEtiqueta(), item.getValor().doubleValue()));
+            // Formateamos la etiqueta para que muestre Nombre y Cantidad
+            String etiqueta = String.format("%s (%d)", item.getEtiqueta(), item.getValor().intValue());
+            pieData.add(new PieChart.Data(etiqueta, item.getValor().doubleValue()));
         }
         pieLibros.setData(pieData);
+        // (Se eliminó el bloque de código de los Tooltips aquí)
 
         // 2. Cargar Gráfico de Clientes (BarChart)
         List<ReporteItem> topClientes = ventaRepository.obtenerMejoresClientes();

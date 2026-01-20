@@ -20,6 +20,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import javafx.util.converter.IntegerStringConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.PageRequest;
@@ -27,11 +28,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Component("ventaFxController") // Nombre único para evitar conflictos
+@Component("ventaFxController")
 @RequiredArgsConstructor
 public class VentaController {
 
@@ -42,13 +41,7 @@ public class VentaController {
 
     @FXML private BorderPane rootPane;
     @FXML private ComboBox<Cliente> cmbClientes;
-    @FXML private TextField txtBuscarLibro;
-    @FXML private TableView<Libro> tablaLibros;
-    @FXML private TableColumn<Libro, String> colLibroTitulo;
-    @FXML private TableColumn<Libro, String> colLibroAutor;
-    @FXML private TableColumn<Libro, BigDecimal> colLibroPrecio;
-    @FXML private TableColumn<Libro, Integer> colLibroStock;
-    @FXML private TableColumn<Libro, Void> colLibroAccion;
+    @FXML private ComboBox<Libro> cmbLibros; // Ahora es un ComboBox simple
 
     @FXML private TableView<ItemCarrito> tablaCarrito;
     @FXML private TableColumn<ItemCarrito, String> colCarritoTitulo;
@@ -56,45 +49,77 @@ public class VentaController {
     @FXML private TableColumn<ItemCarrito, BigDecimal> colCarritoSubtotal;
     @FXML private TableColumn<ItemCarrito, Void> colCarritoEliminar;
 
-    @FXML private ComboBox<Integer> cmbCuotas; // <--- NUEVO SELECTOR
+    @FXML private ComboBox<Integer> cmbCuotas;
     @FXML private Label lblTotal;
 
     private final ObservableList<ItemCarrito> itemsCarrito = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        configurarTablas();
+        configurarTablaCarrito();
         cargarClientes();
-        cargarCuotas(); // <--- Inicializar combo de cuotas
+        cargarCuotas();
+        cargarLibrosCombo();
         tablaCarrito.setItems(itemsCarrito);
     }
 
-    private void cargarCuotas() {
-        // Opciones estándar de cuotas
-        cmbCuotas.setItems(FXCollections.observableArrayList(1, 3, 6, 12));
-        cmbCuotas.setValue(1); // Por defecto 1 cuota (Contado)
-    }
+    private void cargarLibrosCombo() {
+        // Carga simple: Traer datos y ponerlos en el combo
+        List<Libro> libros = libroService.listarLibros(PageRequest.of(0, 2000)).getContent();
+        cmbLibros.setItems(FXCollections.observableArrayList(libros));
 
-    private void configurarTablas() {
-        // --- TABLA LIBROS ---
-        colLibroTitulo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTitulo()));
-        colLibroAutor.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getAutor()));
-        colLibroPrecio.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getPrecioBase()));
-        colLibroStock.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getStock()));
-
-        colLibroAccion.setCellFactory(param -> new TableCell<>() {
-            private final Button btn = new Button("Agregar");
-            {
-                btn.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; -fx-cursor: hand;");
-                btn.setOnAction(e -> agregarAlCarrito(getTableView().getItems().get(getIndex())));
+        // Converter simple: Solo para que se vea el Título en la lista
+        cmbLibros.setConverter(new StringConverter<Libro>() {
+            @Override
+            public String toString(Libro l) {
+                return (l == null) ? "" : l.getTitulo();
             }
-            @Override protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
+
+            @Override
+            public Libro fromString(String string) {
+                return null; // No editable, no necesitamos conversión inversa
             }
         });
+    }
 
-        // --- TABLA CARRITO ---
+    @FXML
+    public void agregarDesdeCombo(ActionEvent event) {
+        Libro libroSeleccionado = cmbLibros.getValue();
+
+        if (libroSeleccionado == null) {
+            NotificationUtil.show("Atención", "Por favor, seleccione un libro.", true, (Stage) rootPane.getScene().getWindow());
+            return;
+        }
+
+        agregarAlCarrito(libroSeleccionado);
+
+        // Limpiar selección para que quede listo para el siguiente
+        cmbLibros.setValue(null);
+    }
+
+    private void agregarAlCarrito(Libro libro) {
+        if (libro.getStock() <= 0) {
+            NotificationUtil.show("Error", "No hay stock disponible.", true, (Stage) rootPane.getScene().getWindow());
+            return;
+        }
+
+        for (ItemCarrito item : itemsCarrito) {
+            if (item.getLibro().getId().equals(libro.getId())) {
+                if (item.getCantidad() < libro.getStock()) {
+                    item.setCantidad(item.getCantidad() + 1);
+                    tablaCarrito.refresh();
+                    calcularTotal();
+                } else {
+                    NotificationUtil.show("Info", "Stock máximo alcanzado.", true, (Stage) rootPane.getScene().getWindow());
+                }
+                return;
+            }
+        }
+        itemsCarrito.add(new ItemCarrito(libro, 1));
+        calcularTotal();
+    }
+
+    private void configurarTablaCarrito() {
         colCarritoTitulo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getLibro().getTitulo()));
         colCarritoCantidad.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getCantidad()));
         colCarritoSubtotal.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getSubtotal()));
@@ -113,47 +138,18 @@ public class VentaController {
     }
 
     private void cargarClientes() {
-        cmbClientes.setItems(FXCollections.observableArrayList(clienteService.listarClientes(PageRequest.of(0, 100)).getContent()));
+        List<Cliente> clientes = clienteService.listarClientes(PageRequest.of(0, 500)).getContent();
+        cmbClientes.setItems(FXCollections.observableArrayList(clientes));
         cmbClientes.setConverter(new StringConverter<>() {
             @Override public String toString(Cliente c) { return c == null ? "" : c.getApellido() + " " + c.getNombre(); }
             @Override public Cliente fromString(String s) { return null; }
         });
     }
 
-    @FXML
-    public void buscarLibro(ActionEvent event) {
-        String termino = txtBuscarLibro.getText();
-        if (termino != null && !termino.isBlank()) {
-            List<Libro> libros = libroService.listarLibros(PageRequest.of(0, 20)).getContent().stream()
-                    .filter(l -> l.getTitulo().toLowerCase().contains(termino.toLowerCase()) || l.getIsbn().contains(termino))
-                    .collect(Collectors.toList());
-            tablaLibros.setItems(FXCollections.observableArrayList(libros));
-        }
-    }
-
-    private void agregarAlCarrito(Libro libro) {
-        if (libro.getStock() <= 0) {
-            NotificationUtil.show("Error", "No hay stock disponible", true, (Stage) rootPane.getScene().getWindow());
-            return;
-        }
-
-        // Verificar si ya está en carrito
-        for (ItemCarrito item : itemsCarrito) {
-            if (item.getLibro().getId().equals(libro.getId())) {
-                if (item.getCantidad() < libro.getStock()) {
-                    item.setCantidad(item.getCantidad() + 1);
-                    tablaCarrito.refresh();
-                    calcularTotal();
-                } else {
-                    NotificationUtil.show("Info", "Máximo stock alcanzado", true, (Stage) rootPane.getScene().getWindow());
-                }
-                return;
-            }
-        }
-
-        // Si no está, agregar nuevo
-        itemsCarrito.add(new ItemCarrito(libro, 1));
-        calcularTotal();
+    private void cargarCuotas() {
+        cmbCuotas.setItems(FXCollections.observableArrayList(1, 3, 6, 12, 18));
+        cmbCuotas.setValue(1);
+        cmbCuotas.setConverter(new IntegerStringConverter());
     }
 
     private void eliminarDelCarrito(ItemCarrito item) {
@@ -162,47 +158,45 @@ public class VentaController {
     }
 
     private void calcularTotal() {
-        BigDecimal total = itemsCarrito.stream()
-                .map(ItemCarrito::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = itemsCarrito.stream().map(ItemCarrito::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         lblTotal.setText("$ " + total.toString());
     }
 
     @FXML
     public void finalizarVenta(ActionEvent event) {
         if (cmbClientes.getValue() == null) {
-            NotificationUtil.show("Error", "Seleccione un cliente", true, (Stage) rootPane.getScene().getWindow());
+            NotificationUtil.show("Error", "Seleccione un cliente.", true, (Stage) rootPane.getScene().getWindow());
             return;
         }
         if (itemsCarrito.isEmpty()) {
-            NotificationUtil.show("Error", "El carrito está vacío", true, (Stage) rootPane.getScene().getWindow());
+            NotificationUtil.show("Error", "El carrito está vacío.", true, (Stage) rootPane.getScene().getWindow());
             return;
         }
 
         try {
-            // Convertir Items Carrito a DTO
+            Integer cuotas = 1;
+            String textoCuotas = cmbCuotas.getEditor().getText();
+            if (textoCuotas != null && !textoCuotas.isBlank()) {
+                try {
+                    cuotas = Integer.parseInt(textoCuotas);
+                } catch (NumberFormatException e) {
+                    NotificationUtil.show("Error", "Cuotas inválidas.", true, (Stage) rootPane.getScene().getWindow());
+                    return;
+                }
+            } else if (cmbCuotas.getValue() != null) {
+                cuotas = cmbCuotas.getValue();
+            }
+
             List<CrearDetalleVentaRequest> detalles = itemsCarrito.stream()
-                    .map(item -> CrearDetalleVentaRequest.builder()
-                            .libroId(item.getLibro().getId())
-                            .cantidad(item.getCantidad())
-                            .build())
-                    .toList();
+                    .map(item -> CrearDetalleVentaRequest.builder().libroId(item.getLibro().getId()).cantidad(item.getCantidad()).build()).toList();
 
             CrearVentaRequest request = CrearVentaRequest.builder()
-                    .clienteId(cmbClientes.getValue().getId())
-                    .detalles(detalles)
-                    .cantidadCuotas(cmbCuotas.getValue()) // <--- USAR EL VALOR DEL COMBOBOX
-                    .build();
+                    .clienteId(cmbClientes.getValue().getId()).detalles(detalles).cantidadCuotas(cuotas).build();
 
             ventaService.registrarVenta(request);
+            NotificationUtil.show("Éxito", "Venta registrada.", false, (Stage) rootPane.getScene().getWindow());
 
-            NotificationUtil.show("Éxito", "Venta registrada correctamente", false, (Stage) rootPane.getScene().getWindow());
-
-            // Limpiar pantalla
-            itemsCarrito.clear();
-            lblTotal.setText("$ 0.00");
-            cmbClientes.getSelectionModel().clearSelection();
-            cmbCuotas.setValue(1); // Resetear a 1
+            limpiarInterfazCompleta();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -210,32 +204,38 @@ public class VentaController {
         }
     }
 
+    private void limpiarInterfazCompleta() {
+        itemsCarrito.clear();
+        lblTotal.setText("$ 0.00");
+        cmbClientes.getSelectionModel().clearSelection();
+        cmbClientes.setValue(null);
+        cmbCuotas.setValue(1);
+        cmbCuotas.getEditor().setText("1");
+
+        // Solo limpiamos selección del combo de libros
+        cmbLibros.setValue(null);
+
+        // Recargar datos frescos
+        cargarLibrosCombo();
+    }
+
     @FXML
     public void volverAlMenu(ActionEvent event) {
+        limpiarInterfazCompleta();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main.fxml"));
             loader.setControllerFactory(applicationContext::getBean);
             Parent root = loader.load();
             Stage stage = (Stage) rootPane.getScene().getWindow();
             stage.getScene().setRoot(root);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
-    // Clase auxiliar simple para la tabla
     @lombok.Data
     public static class ItemCarrito {
         private Libro libro;
         private int cantidad;
-
-        public ItemCarrito(Libro libro, int cantidad) {
-            this.libro = libro;
-            this.cantidad = cantidad;
-        }
-
-        public BigDecimal getSubtotal() {
-            return libro.getPrecioBase().multiply(new BigDecimal(cantidad));
-        }
+        public ItemCarrito(Libro libro, int cantidad) { this.libro = libro; this.cantidad = cantidad; }
+        public BigDecimal getSubtotal() { return libro.getPrecioBase().multiply(new BigDecimal(cantidad)); }
     }
 }

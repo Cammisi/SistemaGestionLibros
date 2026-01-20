@@ -312,3 +312,25 @@ Button:focused {
 .tab-pane .tab-content-area {
   -fx-background-color: #2b2b2b;
 }
+
+/* ... tus estilos anteriores ... */
+
+/* Estilos para el Gráfico de Torta Oscuro */
+.grafico-torta-oscuro .chart-pie-label {
+  -fx-fill: white; /* Color del texto de la etiqueta */
+  -fx-font-size: 11px;
+  -fx-font-weight: bold;
+}
+
+.grafico-torta-oscuro .chart-pie-label-line {
+  -fx-stroke: white; /* Color de la línea/flecha */
+  -fx-stroke-width: 1.5px;
+}
+
+/* Opcional: para asegurar que los ejes del gráfico de barras también sean blancos */
+.axis {
+  -fx-tick-label-fill: white;
+}
+.axis-label {
+  -fx-text-fill: white;
+}
