@@ -101,4 +101,16 @@ class VentaControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Error de Validación"));
     }
+
+    @Test
+    void registrarVenta_DeberiaCapturarJsonInvalido() throws Exception {
+        // JSON roto (falta cerrar llave y comillas) para forzar HttpMessageNotReadableException
+        String jsonRoto = "{ \"clienteId\": 1, \"cantidadCuotas\": ";
+
+        mockMvc.perform(post("/api/ventas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRoto))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Formato JSON Inválido"));
+    }
 }

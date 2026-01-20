@@ -74,4 +74,30 @@ class CsvReporteServiceTest {
         // Verificamos que contenga la cabecera y tenga el tamaño exacto (o sea, sin filas extra)
         assertThat(csv).isEqualTo(cabeceraEsperada);
     }
+
+    @Test
+    void exportarClientes_DeberiaEjecutarseSinErrores() {
+        // Given
+        Cliente c1 = Cliente.builder()
+                .nombre("Test")
+                .apellido("Coverage")
+                .localidad("Localidad")
+                .telefono("111")
+                .direccion("Calle Falsa 123")
+                .interesesPersonales("Java,Spring") // Probamos el replace
+                .build();
+
+        Cliente c2 = Cliente.builder()
+                .nombre("Test2")
+                .interesesPersonales(null) // Probamos el null check
+                .build();
+
+        List<Cliente> clientes = List.of(c1, c2);
+
+        // When & Then
+        // Usamos assertDoesNotThrow para asegurar que la escritura de archivo (aunque sea en entorno de test) no falle la build
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> {
+            csvReporteService.exportarClientes(clientes);
+        });
+    }
 }

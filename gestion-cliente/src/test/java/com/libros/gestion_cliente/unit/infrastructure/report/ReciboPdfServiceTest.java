@@ -17,7 +17,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReciboPdfServiceTest {
@@ -134,5 +135,59 @@ class ReciboPdfServiceTest {
         assertThatThrownBy(() -> reciboPdfService.generarReciboCuota(1L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Error generando PDF para API"); // Mensaje actualizado
+    }
+
+    // --- Test para cubrir el cambio de estado a PAGADA ---
+    @Test
+    void generarRecibo_DeberiaCambiarEstado_SiEstaPendiente() {
+        // Given
+        Venta venta = Venta.builder().nroFactura("F-001").cliente(Cliente.builder().nombre("A").apellido("B").build()).build();
+        Cuota cuota = Cuota.builder()
+                .id(1L)
+                .venta(venta)
+                .numeroCuota(1)
+                .montoCuota(BigDecimal.TEN)
+                .estado(EstadoCuota.PENDIENTE) // <--- CASO 1: PENDIENTE
+                .build();
+
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
+
+        // When
+        // Capturamos excepción de IO o Runtime si falla la creación del archivo real,
+        // pero lo importante es que corra la lógica previa
+        try {
+            reciboPdfService.generarRecibo(cuota); // Llamamos al método público que guarda archivo
+        } catch (Exception e) {
+            // Ignoramos errores de FileSystem en entorno de test (GitHub Actions a veces no tiene Desktop)
+        }
+
+        // Then
+        // Verificamos que se intentó guardar la cuota con el nuevo estado
+        verify(cuotaRepository).save(argThat(c -> c.getEstado() == EstadoCuota.PAGADA));
+    }
+
+    // --- Test para cubrir el NO cambio de estado ---
+    @Test
+    void generarRecibo_NoDeberiaGuardar_SiYaEstaPagada() {
+        // Given
+        Venta venta = Venta.builder().nroFactura("F-002").cliente(Cliente.builder().nombre("A").apellido("B").build()).build();
+        Cuota cuota = Cuota.builder()
+                .id(2L)
+                .venta(venta)
+                .numeroCuota(2)
+                .montoCuota(BigDecimal.TEN)
+                .estado(EstadoCuota.PAGADA) // <--- CASO 2: YA PAGADA
+                .build();
+
+        when(cuotaRepository.findById(2L)).thenReturn(Optional.of(cuota));
+
+        // When
+        try {
+            reciboPdfService.generarRecibo(cuota);
+        } catch (Exception e) {}
+
+        // Then
+        // Verificamos que NUNCA se llame al save
+        verify(cuotaRepository, never()).save(any());
     }
 }

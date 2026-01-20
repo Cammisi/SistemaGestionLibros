@@ -193,4 +193,38 @@ class VentaServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Stock insuficiente");
     }
+
+    // --- Test para cubrir listarVentasRecientes ---
+    @Test
+    void listarVentasRecientes_DeberiaLlamarAlRepositorio() {
+        // When
+        ventaService.listarVentasRecientes();
+
+        // Then
+        // Verificamos que llame al método específico del repositorio con ordenamiento
+        verify(ventaRepository).findAllWithCliente(any(org.springframework.data.domain.Sort.class));
+    }
+
+    // --- Test para cubrir el branch de 0 Cuotas ---
+    @Test
+    void registrarVenta_DeberiaIgnorarGeneracionCuotas_CuandoCuotasEsCero() {
+        // Given
+        CrearVentaRequest request = new CrearVentaRequest();
+        request.setClienteId(1L);
+        request.setCantidadCuotas(0); // <--- ESTO FUERZA EL ELSE (O SALTAR EL IF)
+        request.setDetalles(new ArrayList<>());
+
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // When
+        ventaService.registrarVenta(request);
+
+        // Then
+        // Verificamos que NUNCA se llame a guardar cuotas
+        verify(cuotaRepository, never()).save(any(Cuota.class));
+    }
 }
