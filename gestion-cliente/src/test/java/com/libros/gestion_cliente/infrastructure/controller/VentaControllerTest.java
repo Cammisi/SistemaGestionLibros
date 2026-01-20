@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.libros.gestion_cliente.application.dto.CrearVentaRequest;
 import com.libros.gestion_cliente.application.service.VentaService;
 import com.libros.gestion_cliente.domain.model.Venta;
+import com.libros.gestion_cliente.application.dto.CrearDetalleVentaRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -37,10 +38,10 @@ class VentaControllerTest {
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
         request.setCantidadCuotas(3);
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(10L);
-        item.setCantidad(1);
-        request.setItems(List.of(item));
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder() // O new CrearDetalleVentaRequest() si no usas builder
+                .libroId(10L)
+                .cantidad(2)
+                .build();
 
         // Simulamos que el servicio devuelve una venta vacía (no nos importan los detalles aquí, solo el flujo HTTP)
         when(ventaService.registrarVenta(any(CrearVentaRequest.class))).thenReturn(new Venta());
@@ -59,11 +60,10 @@ class VentaControllerTest {
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
         request.setCantidadCuotas(1);
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(1L);
-        item.setCantidad(1);
-        request.setItems(List.of(item));
-
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder() // O new CrearDetalleVentaRequest() si no usas builder
+                .libroId(1L)
+                .cantidad(1)
+                .build();
         // Simulamos que el servicio lanza excepción por Stock o Deuda
         when(ventaService.registrarVenta(any())).thenThrow(new IllegalStateException("Stock insuficiente"));
 
@@ -101,11 +101,10 @@ class VentaControllerTest {
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
         request.setCantidadCuotas(1);
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(1L);
-        item.setCantidad(9999); // Pide mucho stock
-        request.setItems(List.of(item));
-
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder() // O new CrearDetalleVentaRequest() si no usas builder
+                .libroId(1L)
+                .cantidad(9999)
+                .build();
         // ...PERO el servicio dice "NO" (Simulamos la excepción)
         // Usamos any() para no complicarnos con el matching del objeto exacto
         Mockito.when(ventaService.registrarVenta(Mockito.any()))
@@ -126,10 +125,10 @@ class VentaControllerTest {
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(99L);
         request.setCantidadCuotas(1);
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(1L);
-        item.setCantidad(1);
-        request.setItems(List.of(item));
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder() // O new CrearDetalleVentaRequest() si no usas builder
+                .libroId(1L)
+                .cantidad(1)
+                .build();
 
         // Simulamos que el servicio no encuentra al cliente
         when(ventaService.registrarVenta(any())).thenThrow(new RuntimeException("Cliente no encontrado"));
@@ -163,11 +162,10 @@ class VentaControllerTest {
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
         request.setCantidadCuotas(1);
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(1L);
-        item.setCantidad(1);
-        request.setItems(List.of(item));
-
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder() // O new CrearDetalleVentaRequest() si no usas builder
+                .libroId(1L)
+                .cantidad(1)
+                .build();
         // ...PERO el servicio lanza un error GENÉRICO (sin el texto "no encontrado")
         when(ventaService.registrarVenta(any()))
                 .thenThrow(new RuntimeException("Error fatal de base de datos"));

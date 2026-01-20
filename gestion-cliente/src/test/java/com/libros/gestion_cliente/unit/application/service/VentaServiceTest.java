@@ -1,17 +1,18 @@
 package com.libros.gestion_cliente.unit.application.service;
 
+import com.libros.gestion_cliente.application.dto.CrearDetalleVentaRequest;
 import com.libros.gestion_cliente.application.dto.CrearVentaRequest;
 import com.libros.gestion_cliente.application.service.VentaService;
 import com.libros.gestion_cliente.domain.model.*;
 import com.libros.gestion_cliente.domain.repository.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,7 @@ class VentaServiceTest {
         Long clienteId = 1L;
         Long libroId = 10L;
 
+        // 1. Preparar Datos Mock
         Cliente cliente = Cliente.builder().id(clienteId).nombre("Juan").build();
         Libro libro = Libro.builder()
                 .id(libroId)
@@ -47,30 +49,38 @@ class VentaServiceTest {
                 .stock(10)
                 .build();
 
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(libroId);
-        item.setCantidad(1);
+        // 2. Preparar Request
+        List<CrearDetalleVentaRequest> listaDetalles = new ArrayList<>();
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder()
+                .libroId(libroId)
+                .cantidad(1)
+                .build();
+        listaDetalles.add(item);
 
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
+        // CORRECCIÓN: Usamos setDetalles en lugar de setItems
+        request.setDetalles(listaDetalles);
         request.setCantidadCuotas(3);
-        request.setItems(List.of(item));
 
-        // Mocks
+        // 3. Configurar Mocks
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(false);
         when(libroRepository.findById(libroId)).thenReturn(Optional.of(libro));
         when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(false);
+        // Simulamos que al guardar devuelve la misma venta
         when(ventaRepository.save(any(Venta.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Ejecución
+        // 4. Ejecución
         Venta resultado = ventaService.registrarVenta(request);
 
-        // Verificaciones
+        // 5. Verificaciones
         assertThat(resultado.getCliente()).isEqualTo(cliente);
+        // Verifica que el monto sea correcto (100 * 1)
         assertThat(resultado.getMontoTotal()).isEqualByComparingTo(new BigDecimal("100.00"));
-        verify(libroRepository).save(libro);
-        verify(cuotaRepository, times(3)).save(any(Cuota.class));
+
+        verify(libroRepository).save(libro); // Verifica que restó stock
+        verify(cuotaRepository, times(3)).save(any(Cuota.class)); // Verifica cuotas
     }
 
     // --- TEST 2: FALLO POR CLIENTE INEXISTENTE ---
@@ -95,15 +105,15 @@ class VentaServiceTest {
         Long clienteId = 1L;
         Long libroIdInexistente = 99L;
 
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(libroIdInexistente);
-        item.setCantidad(1);
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder()
+                .libroId(libroIdInexistente)
+                .cantidad(1)
+                .build();
 
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
-        request.setItems(List.of(item));
+        request.setDetalles(List.of(item)); // CORRECCIÓN: setDetalles
 
-        // CORRECCIÓN AQUÍ: Usamos builder().id() para que el cliente tenga ID y no sea null
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
         when(libroRepository.findById(libroIdInexistente)).thenReturn(Optional.empty());
@@ -113,28 +123,21 @@ class VentaServiceTest {
                 .hasMessageContaining("Libro no encontrado");
     }
 
-    // --- TEST 4: FALLO POR DEUDA (EL QUE FALLABA) ---
+    // --- TEST 4: FALLO POR DEUDA ---
     @Test
     void registrarVenta_DeberiaFallar_SiClienteTieneDeuda() {
-        // GIVEN
-        Long clienteId = 1L; // Asegúrate de usar 1L
+        Long clienteId = 1L;
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
 
-        // --- CORRECCIÓN AQUÍ ---
-        // Antes probablemente tenías: new Cliente() o builder().build() sin ID.
-        // Debemos ponerle el ID explícitamente: .id(clienteId)
         Cliente clienteSimulado = Cliente.builder()
-                .id(clienteId) // <--- ¡ESTO ES LO QUE FALTA!
+                .id(clienteId)
                 .nombre("Test")
                 .build();
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(clienteSimulado));
+        when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true); // SIMULA DEUDA
 
-        // Ahora Mockito estará feliz porque el ID (1L) coincidirá
-        when(ventaRepository.existsByClienteIdAndEstado(eq(clienteId), any())).thenReturn(true);
-
-        // WHEN / THEN
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("venta en proceso");
@@ -148,17 +151,19 @@ class VentaServiceTest {
         Long clienteId = 1L;
         Long libroId = 10L;
 
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(libroId);
-        item.setCantidad(1);
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder()
+                .libroId(libroId)
+                .cantidad(1)
+                .build();
+
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(clienteId);
-        request.setItems(List.of(item));
+        request.setDetalles(List.of(item)); // CORRECCIÓN: setDetalles
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(Cliente.builder().id(clienteId).build()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
         when(libroRepository.findById(libroId)).thenReturn(Optional.of(Libro.builder().id(libroId).build()));
-        when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(true);
+        when(detalleVentaRepository.haCompradoLibro(eq(clienteId), eq(libroId))).thenReturn(true); // SIMULA YA COMPRADO
 
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
                 .isInstanceOf(IllegalStateException.class)
@@ -169,15 +174,19 @@ class VentaServiceTest {
     @Test
     void registrarVenta_DeberiaFallar_SiStockInsuficiente() {
         Long libroId = 10L;
-        CrearVentaRequest.ItemVenta item = new CrearVentaRequest.ItemVenta();
-        item.setLibroId(libroId);
-        item.setCantidad(5);
+
+        CrearDetalleVentaRequest item = CrearDetalleVentaRequest.builder()
+                .libroId(libroId)
+                .cantidad(5) // Pide 5
+                .build();
+
         CrearVentaRequest request = new CrearVentaRequest();
         request.setClienteId(1L);
-        request.setItems(List.of(item));
+        request.setDetalles(List.of(item)); // CORRECCIÓN: setDetalles
 
         when(clienteRepository.findById(any())).thenReturn(Optional.of(Cliente.builder().id(1L).build()));
         when(ventaRepository.existsByClienteIdAndEstado(any(), any())).thenReturn(false);
+        // Stock solo tiene 1
         when(libroRepository.findById(libroId)).thenReturn(Optional.of(Libro.builder().id(libroId).stock(1).build()));
 
         assertThatThrownBy(() -> ventaService.registrarVenta(request))
