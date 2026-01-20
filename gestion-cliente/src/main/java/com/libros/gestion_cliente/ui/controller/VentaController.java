@@ -7,10 +7,9 @@ import com.libros.gestion_cliente.application.service.LibroService;
 import com.libros.gestion_cliente.application.service.VentaService;
 import com.libros.gestion_cliente.domain.model.Cliente;
 import com.libros.gestion_cliente.domain.model.Libro;
-import com.libros.gestion_cliente.domain.model.Venta;
-import com.libros.gestion_cliente.ui.model.ItemCarritoFx;
 import com.libros.gestion_cliente.ui.util.NotificationUtil;
-import javafx.animation.FadeTransition;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -20,24 +19,19 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import javafx.util.StringConverter;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.Button;
 import lombok.RequiredArgsConstructor;
-import javafx.scene.Scene;
-import javafx.stage.Modality;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component("ventaFxController")
+@Component("ventaFxController") // Nombre único para evitar conflictos
 @RequiredArgsConstructor
 public class VentaController {
 
@@ -48,244 +42,200 @@ public class VentaController {
 
     @FXML private BorderPane rootPane;
     @FXML private ComboBox<Cliente> cmbClientes;
-    @FXML private ComboBox<Libro> cmbLibros;
-    @FXML private Spinner<Integer> spinnerCantidad;
+    @FXML private TextField txtBuscarLibro;
+    @FXML private TableView<Libro> tablaLibros;
+    @FXML private TableColumn<Libro, String> colLibroTitulo;
+    @FXML private TableColumn<Libro, String> colLibroAutor;
+    @FXML private TableColumn<Libro, BigDecimal> colLibroPrecio;
+    @FXML private TableColumn<Libro, Integer> colLibroStock;
+    @FXML private TableColumn<Libro, Void> colLibroAccion;
 
-    @FXML private TableView<ItemCarritoFx> tablaCarrito;
-    @FXML private TableColumn<ItemCarritoFx, String> colProducto;
-    @FXML private TableColumn<ItemCarritoFx, BigDecimal> colPrecio;
-    @FXML private TableColumn<ItemCarritoFx, Integer> colCantidad;
-    @FXML private TableColumn<ItemCarritoFx, BigDecimal> colSubtotal;
-    @FXML private TableColumn<ItemCarritoFx, Void> colAccion;
+    @FXML private TableView<ItemCarrito> tablaCarrito;
+    @FXML private TableColumn<ItemCarrito, String> colCarritoTitulo;
+    @FXML private TableColumn<ItemCarrito, Integer> colCarritoCantidad;
+    @FXML private TableColumn<ItemCarrito, BigDecimal> colCarritoSubtotal;
+    @FXML private TableColumn<ItemCarrito, Void> colCarritoEliminar;
 
+    @FXML private ComboBox<Integer> cmbCuotas; // <--- NUEVO SELECTOR
     @FXML private Label lblTotal;
 
-    private final ObservableList<ItemCarritoFx> carrito = FXCollections.observableArrayList();
+    private final ObservableList<ItemCarrito> itemsCarrito = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        configurarAnimacion();
         configurarTablas();
-        cargarDatosIniciales();
-        configurarSpinner();
+        cargarClientes();
+        cargarCuotas(); // <--- Inicializar combo de cuotas
+        tablaCarrito.setItems(itemsCarrito);
     }
 
-    private void configurarAnimacion() {
-        rootPane.setOpacity(0);
-        FadeTransition fade = new FadeTransition(Duration.millis(500), rootPane);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.play();
+    private void cargarCuotas() {
+        // Opciones estándar de cuotas
+        cmbCuotas.setItems(FXCollections.observableArrayList(1, 3, 6, 12));
+        cmbCuotas.setValue(1); // Por defecto 1 cuota (Contado)
     }
 
     private void configurarTablas() {
-        // Enlazar columnas de datos
-        colProducto.setCellValueFactory(cell -> cell.getValue().getTitulo());
-        colPrecio.setCellValueFactory(cell -> cell.getValue().getPrecioUnitario());
-        colCantidad.setCellValueFactory(cell -> cell.getValue().getCantidad().asObject());
-        colSubtotal.setCellValueFactory(cell -> cell.getValue().getSubtotal());
+        // --- TABLA LIBROS ---
+        colLibroTitulo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTitulo()));
+        colLibroAutor.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getAutor()));
+        colLibroPrecio.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getPrecioBase()));
+        colLibroStock.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getStock()));
 
-        // --- CONFIGURACIÓN DEL BOTÓN ELIMINAR ---
-        colAccion.setCellFactory(param -> new TableCell<>() {
-            private final Button btnEliminar = new Button("X");
-
+        colLibroAccion.setCellFactory(param -> new TableCell<>() {
+            private final Button btn = new Button("Agregar");
             {
-                // Estilo rojo para el botón
-                btnEliminar.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-                btnEliminar.setOnAction(event -> {
-                    // Obtener el item de la fila actual
-                    ItemCarritoFx item = getTableView().getItems().get(getIndex());
-                    // Eliminar del carrito
-                    carrito.remove(item);
-                    // Recalcular el total general
-                    actualizarTotal();
-                });
+                btn.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; -fx-cursor: hand;");
+                btn.setOnAction(e -> agregarAlCarrito(getTableView().getItems().get(getIndex())));
             }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
+            @Override protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(btnEliminar);
-                }
+                setGraphic(empty ? null : btn);
             }
         });
 
-        tablaCarrito.setItems(carrito);
+        // --- TABLA CARRITO ---
+        colCarritoTitulo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getLibro().getTitulo()));
+        colCarritoCantidad.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getCantidad()));
+        colCarritoSubtotal.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getSubtotal()));
+
+        colCarritoEliminar.setCellFactory(param -> new TableCell<>() {
+            private final Button btn = new Button("X");
+            {
+                btn.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+                btn.setOnAction(e -> eliminarDelCarrito(getTableView().getItems().get(getIndex())));
+            }
+            @Override protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
+        });
     }
 
-    private void limpiarFormulario() {
-        carrito.clear(); // Vacía la lista observable y la tabla
-        lblTotal.setText("$ 0.00");
-
-        if (cmbClientes != null) cmbClientes.getSelectionModel().clearSelection();
-        if (cmbLibros != null) cmbLibros.getSelectionModel().clearSelection();
-        if (spinnerCantidad != null) spinnerCantidad.getValueFactory().setValue(1);
-    }
-
-    private void configurarSpinner() {
-        // Spinner de 1 a 100, valor inicial 1
-        SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 1);
-        spinnerCantidad.setValueFactory(valueFactory);
-    }
-
-    private void cargarDatosIniciales() {
-        // 1. Cargar Clientes (Traemos los primeros 50 para el combo, idealmente sería búsqueda dinámica)
-        List<Cliente> clientes = clienteService.listarClientes(PageRequest.of(0, 50)).getContent();
-        cmbClientes.setItems(FXCollections.observableArrayList(clientes));
-
-        // Convertidor para mostrar "Nombre Apellido" en el ComboBox en vez del toString feo
+    private void cargarClientes() {
+        cmbClientes.setItems(FXCollections.observableArrayList(clienteService.listarClientes(PageRequest.of(0, 100)).getContent()));
         cmbClientes.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(Cliente c) {
-                return c == null ? "" : c.getNombre() + " " + c.getApellido() + " (DNI: " + c.getDni() + ")";
-            }
-            @Override
-            public Cliente fromString(String string) {
-                return null; // No necesario para selección
-            }
-        });
-
-        // 2. Cargar Libros (Stock > 0)
-        // OJO: Aquí deberíamos usar un método en LibroService que traiga solo disponibles.
-        // Por ahora listamos todos paginados.
-        List<Libro> libros = libroService.listarLibros(PageRequest.of(0, 100)).getContent();
-        cmbLibros.setItems(FXCollections.observableArrayList(libros));
-
-        cmbLibros.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(Libro l) {
-                return l == null ? "" : l.getTitulo() + " - $" + l.getPrecioBase();
-            }
-            @Override
-            public Libro fromString(String string) {
-                return null;
-            }
+            @Override public String toString(Cliente c) { return c == null ? "" : c.getApellido() + " " + c.getNombre(); }
+            @Override public Cliente fromString(String s) { return null; }
         });
     }
 
     @FXML
-    public void agregarAlCarrito(ActionEvent event) {
-        Libro libroSeleccionado = cmbLibros.getValue();
-        Integer cantidad = spinnerCantidad.getValue();
-
-        if (libroSeleccionado == null) {
-            mostrarNotificacion("Atención", "Seleccione un libro primero", true);
-            return;
+    public void buscarLibro(ActionEvent event) {
+        String termino = txtBuscarLibro.getText();
+        if (termino != null && !termino.isBlank()) {
+            List<Libro> libros = libroService.listarLibros(PageRequest.of(0, 20)).getContent().stream()
+                    .filter(l -> l.getTitulo().toLowerCase().contains(termino.toLowerCase()) || l.getIsbn().contains(termino))
+                    .collect(Collectors.toList());
+            tablaLibros.setItems(FXCollections.observableArrayList(libros));
         }
-
-        if (libroSeleccionado.getStock() < cantidad) {
-            mostrarNotificacion("Stock Insuficiente", "Solo quedan " + libroSeleccionado.getStock() + " unidades", true);
-            return;
-        }
-
-        // Agregar al carrito
-        carrito.add(new ItemCarritoFx(libroSeleccionado, cantidad));
-        actualizarTotal();
-
-        // Resetear selección
-        cmbLibros.getSelectionModel().clearSelection();
-        spinnerCantidad.getValueFactory().setValue(1);
     }
 
-    private void actualizarTotal() {
-        BigDecimal total = carrito.stream()
-                .map(item -> item.getSubtotal().get())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private void agregarAlCarrito(Libro libro) {
+        if (libro.getStock() <= 0) {
+            NotificationUtil.show("Error", "No hay stock disponible", true, (Stage) rootPane.getScene().getWindow());
+            return;
+        }
 
+        // Verificar si ya está en carrito
+        for (ItemCarrito item : itemsCarrito) {
+            if (item.getLibro().getId().equals(libro.getId())) {
+                if (item.getCantidad() < libro.getStock()) {
+                    item.setCantidad(item.getCantidad() + 1);
+                    tablaCarrito.refresh();
+                    calcularTotal();
+                } else {
+                    NotificationUtil.show("Info", "Máximo stock alcanzado", true, (Stage) rootPane.getScene().getWindow());
+                }
+                return;
+            }
+        }
+
+        // Si no está, agregar nuevo
+        itemsCarrito.add(new ItemCarrito(libro, 1));
+        calcularTotal();
+    }
+
+    private void eliminarDelCarrito(ItemCarrito item) {
+        itemsCarrito.remove(item);
+        calcularTotal();
+    }
+
+    private void calcularTotal() {
+        BigDecimal total = itemsCarrito.stream()
+                .map(ItemCarrito::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         lblTotal.setText("$ " + total.toString());
     }
 
     @FXML
-    public void confirmarVenta(ActionEvent event) {
-        if (carrito.isEmpty()) {
-            mostrarNotificacion("Error", "El carrito está vacío", true);
+    public void finalizarVenta(ActionEvent event) {
+        if (cmbClientes.getValue() == null) {
+            NotificationUtil.show("Error", "Seleccione un cliente", true, (Stage) rootPane.getScene().getWindow());
             return;
         }
-
-        Cliente cliente = cmbClientes.getValue();
-        if (cliente == null) {
-            mostrarNotificacion("Error", "Debe seleccionar un cliente", true);
+        if (itemsCarrito.isEmpty()) {
+            NotificationUtil.show("Error", "El carrito está vacío", true, (Stage) rootPane.getScene().getWindow());
             return;
         }
 
         try {
-            // 1. Convertir carrito visual a DTO de solicitud
-            List<CrearDetalleVentaRequest> detalles = carrito.stream()
+            // Convertir Items Carrito a DTO
+            List<CrearDetalleVentaRequest> detalles = itemsCarrito.stream()
                     .map(item -> CrearDetalleVentaRequest.builder()
-                            .libroId(item.getLibroId().get())
-                            .cantidad(item.getCantidad().get())
+                            .libroId(item.getLibro().getId())
+                            .cantidad(item.getCantidad())
                             .build())
-                    .collect(Collectors.toList());
+                    .toList();
 
-            // 2. Crear Request de Venta
             CrearVentaRequest request = CrearVentaRequest.builder()
-                    .clienteId(cliente.getId())
-                    .cantidadCuotas(1) // Por defecto contado 1 cuota
+                    .clienteId(cmbClientes.getValue().getId())
                     .detalles(detalles)
+                    .cantidadCuotas(cmbCuotas.getValue()) // <--- USAR EL VALOR DEL COMBOBOX
                     .build();
 
-            // 3. Llamar al servicio
-            Venta venta = ventaService.registrarVenta(request);
+            ventaService.registrarVenta(request);
 
-            mostrarNotificacion("¡Venta Exitosa!", "Factura Nro: " + venta.getNroFactura(), false);
+            NotificationUtil.show("Éxito", "Venta registrada correctamente", false, (Stage) rootPane.getScene().getWindow());
 
-            // Limpiar todo
-            carrito.clear();
-            actualizarTotal();
+            // Limpiar pantalla
+            itemsCarrito.clear();
+            lblTotal.setText("$ 0.00");
             cmbClientes.getSelectionModel().clearSelection();
-
-            // Opcional: Navegar a historial o generar PDF aquí mismo
+            cmbCuotas.setValue(1); // Resetear a 1
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarNotificacion("Error en Venta", e.getMessage(), true);
-        }
-    }
-
-    @FXML
-    public void nuevoCliente(ActionEvent event) {
-        // Reutilizamos el formulario de clientes
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/cliente_form.fxml"));
-            loader.setControllerFactory(applicationContext::getBean);
-            Parent root = loader.load();
-
-            // Recargar combo al cerrar el formulario
-            ClienteFormController controller = loader.getController();
-            controller.setOnSaveSuccess(this::cargarDatosIniciales);
-
-            Stage modalStage = new Stage();
-            modalStage.setScene(new Scene(root));
-            modalStage.initOwner(rootPane.getScene().getWindow());
-            modalStage.showAndWait();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            NotificationUtil.show("Error", "Falló la venta: " + e.getMessage(), true, (Stage) rootPane.getScene().getWindow());
         }
     }
 
     @FXML
     public void volverAlMenu(ActionEvent event) {
-        // Limpiamos antes de irnos para que al volver esté vacío
-        limpiarFormulario();
-
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main.fxml"));
             loader.setControllerFactory(applicationContext::getBean);
             Parent root = loader.load();
-
             Stage stage = (Stage) rootPane.getScene().getWindow();
             stage.getScene().setRoot(root);
-            stage.setTitle("Fernando Libros - Sistema de Gestión");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void mostrarNotificacion(String titulo, String mensaje, boolean isError) {
-        NotificationUtil.show(titulo, mensaje, isError, (Stage) rootPane.getScene().getWindow());
+    // Clase auxiliar simple para la tabla
+    @lombok.Data
+    public static class ItemCarrito {
+        private Libro libro;
+        private int cantidad;
+
+        public ItemCarrito(Libro libro, int cantidad) {
+            this.libro = libro;
+            this.cantidad = cantidad;
+        }
+
+        public BigDecimal getSubtotal() {
+            return libro.getPrecioBase().multiply(new BigDecimal(cantidad));
+        }
     }
 }

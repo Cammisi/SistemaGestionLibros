@@ -1,81 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import java.net.URL?>
 
-<BorderPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.libros.gestion_cliente.ui.controller.VentaController">
+<BorderPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.libros.gestion_cliente.ui.controller.VentaController">
 
     <stylesheets>
         <URL value="@../css/styles.css" />
     </stylesheets>
 
     <top>
-        <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #333333;">
-            <Label text="Nueva Venta" styleClass="label-titulo" />
-
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="Cliente:" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-                <ComboBox fx:id="cmbClientes" prefWidth="300" promptText="Seleccione o busque cliente"/>
-                <Button text="+ Nuevo" onAction="#nuevoCliente" style="-fx-background-color: #555555; -fx-font-size: 10px;"/>
-            </HBox>
-
-            <Separator />
-
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="Libro:" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-                <ComboBox fx:id="cmbLibros" prefWidth="300" promptText="Busque por título"/>
-
-                <Label text="Cant:" style="-fx-text-fill: #cccccc;"/>
-                <Spinner fx:id="spinnerCantidad" prefWidth="80" editable="true"/>
-
-                <Button text="Agregar al Carrito" onAction="#agregarAlCarrito" styleClass="boton-verde"/>
-            </HBox>
-        </VBox>
+        <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-padding: 20; -fx-background-color: #333333;">
+            <Label styleClass="label-titulo" text="Nueva Venta" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#volverAlMenu" prefWidth="150" style="-fx-background-color: #555555;" text="Volver al Menú" />
+        </HBox>
     </top>
 
     <center>
-        <VBox spacing="10" style="-fx-padding: 20;">
-            <Label text="Detalle de la Venta" style="-fx-font-size: 16px; -fx-text-fill: #aaaaaa;"/>
+        <VBox spacing="15" style="-fx-padding: 20;">
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label style="-fx-text-fill: white; -fx-font-weight: bold;" text="Cliente:" />
+                <ComboBox fx:id="cmbClientes" prefWidth="300" promptText="Seleccione un cliente..." />
+            </HBox>
+
+            <Region prefHeight="10" />
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label style="-fx-text-fill: white;" text="Buscar Libro:" />
+                <TextField fx:id="txtBuscarLibro" prefWidth="250" promptText="Título o ISBN..." />
+                <Button onAction="#buscarLibro" text="Buscar" />
+            </HBox>
+
+            <TableView fx:id="tablaLibros" prefHeight="200">
+                <columns>
+                    <TableColumn fx:id="colLibroTitulo" prefWidth="300" text="Título" />
+                    <TableColumn fx:id="colLibroAutor" prefWidth="200" text="Autor" />
+                    <TableColumn fx:id="colLibroPrecio" prefWidth="100" text="Precio" />
+                    <TableColumn fx:id="colLibroStock" prefWidth="80" text="Stock" />
+                    <TableColumn fx:id="colLibroAccion" prefWidth="100" style="-fx-alignment: CENTER;" text="Agregar" />
+                </columns>
+            </TableView>
+
+            <Label style="-fx-text-fill: #ffd700; -fx-font-size: 16px; -fx-font-weight: bold;" text="CARRITO DE COMPRA" />
 
             <TableView fx:id="tablaCarrito" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colProducto" text="Libro / Producto" prefWidth="350" />
-                    <TableColumn fx:id="colPrecio" text="Precio Unit." prefWidth="120" />
-                    <TableColumn fx:id="colCantidad" text="Cant." prefWidth="80" />
-                    <TableColumn fx:id="colSubtotal" text="Subtotal" prefWidth="120" styleClass="total-column"/>
-                    <TableColumn fx:id="colAccion" text="Eliminar" prefWidth="80" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCarritoTitulo" prefWidth="350" text="Libro" />
+                    <TableColumn fx:id="colCarritoCantidad" prefWidth="100" text="Cantidad" />
+                    <TableColumn fx:id="colCarritoSubtotal" prefWidth="120" text="Subtotal" />
+                    <TableColumn fx:id="colCarritoEliminar" prefWidth="100" style="-fx-alignment: CENTER;" text="Quitar" />
                 </columns>
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                </columnResizePolicy>
             </TableView>
+
+            <HBox alignment="CENTER_RIGHT" spacing="20">
+
+                <VBox alignment="CENTER_LEFT" spacing="5">
+                    <Label text="Cantidad Cuotas:" style="-fx-text-fill: white;"/>
+                    <ComboBox fx:id="cmbCuotas" prefWidth="100" style="-fx-font-weight: bold;"/>
+                </VBox>
+
+                <Label style="-fx-text-fill: white; -fx-font-size: 18px;" text="Total a Pagar:" />
+                <Label fx:id="lblTotal"
+                       style="-fx-text-fill: #2ecc71; -fx-font-size: 24px; -fx-font-weight: bold;"
+                       text="\$ 0.00" />
+
+                <Button onAction="#finalizarVenta" prefHeight="50" prefWidth="200" styleClass="boton-verde" text="FINALIZAR VENTA" />
+            </HBox>
+
         </VBox>
     </center>
-
-    <bottom>
-        <HBox alignment="CENTER_RIGHT" spacing="20" style="-fx-padding: 20; -fx-background-color: #2b2b2b; -fx-border-color: #555555; -fx-border-width: 1 0 0 0;">
-
-            <Button text="Cancelar / Volver" onAction="#volverAlMenu" prefWidth="150" style="-fx-background-color: #c0392b; -fx-text-fill: white;"/>
-
-            <Region HBox.hgrow="ALWAYS" />
-
-            <Label text="TOTAL A PAGAR:" style="-fx-font-size: 18px; -fx-text-fill: #cccccc;"/>
-            <Label fx:id="lblTotal" text="\$ 0.00" style="-fx-font-size: 28px; -fx-text-fill: #ffd700; -fx-font-weight: bold;"/>
-
-            <Button text="CONFIRMAR VENTA" onAction="#confirmarVenta" styleClass="boton-verde" prefWidth="200" prefHeight="50" style="-fx-font-size: 16px;"/>
-        </HBox>
-    </bottom>
 
 </BorderPane>
