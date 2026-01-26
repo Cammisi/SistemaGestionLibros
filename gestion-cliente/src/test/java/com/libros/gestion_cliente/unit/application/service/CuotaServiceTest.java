@@ -83,4 +83,15 @@ class CuotaServiceTest {
         assertThatThrownBy(() -> cuotaService.registrarPago(99L))
                 .isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void buscarPorId_DeberiaLanzarExcepcion_CuandoNoExiste() {
+        // GIVEN
+        when(cuotaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> cuotaService.buscarPorId(99L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada con ID: 99");
+    }
 }

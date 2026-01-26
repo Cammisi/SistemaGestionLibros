@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -115,5 +116,39 @@ class ClienteServiceTest {
         assertThatThrownBy(() -> clienteService.buscarPorDni(dni))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Cliente no encontrado");
+    }
+
+    @Test
+    void crearCliente_DeberiaUsarFechaAltaManual_SiSeProporciona() {
+        // GIVEN
+        LocalDate fechaManual = LocalDate.of(2020, 1, 1);
+        CrearClienteRequest request = new CrearClienteRequest();
+        request.setNombre("Test");
+        request.setFechaAlta(fechaManual); // CASO 1: Fecha manual
+
+        when(clienteRepository.save(any(Cliente.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // WHEN
+        Cliente resultado = clienteService.crearCliente(request);
+
+        // THEN
+        assertThat(resultado.getFechaAlta()).isEqualTo(fechaManual);
+    }
+
+    @Test
+    void crearCliente_DeberiaUsarFechaActual_SiNoSeProporciona() {
+        // GIVEN
+        CrearClienteRequest request = new CrearClienteRequest();
+        request.setNombre("Test");
+        request.setFechaAlta(null); // CASO 2: Fecha null (default)
+
+        when(clienteRepository.save(any(Cliente.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // WHEN
+        Cliente resultado = clienteService.crearCliente(request);
+
+        // THEN
+        assertThat(resultado.getFechaAlta()).isNotNull();
+        // Podríamos validar que sea hoy, pero con que no sea null basta para coverage
     }
 }

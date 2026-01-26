@@ -10,8 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -56,5 +55,18 @@ class CuotaControllerTest {
                 .andExpect(status().isOk())
                 // Verificamos que el texto coincida con el return del controlador
                 .andExpect(content().string("Recibo generado correctamente en el Escritorio."));
+    }
+
+    @Test
+    void generarRecibo_DeberiaRetornar500_SiFallaServicio() throws Exception {
+        // GIVEN
+        Long idCuota = 1L;
+        // Simulamos que el servicio void lanza una excepción
+        doThrow(new RuntimeException("Error simulado PDF")).when(reciboPdfService).generarReciboCuota(idCuota);
+
+        // WHEN & THEN
+        mockMvc.perform(get("/api/cuotas/1/recibo"))
+                .andExpect(status().isInternalServerError()) // 500
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Error al generar recibo")));
     }
 }

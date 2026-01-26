@@ -37,4 +37,17 @@ class FamiliarTest {
         familiar.setRelacion("Amigo");
         assertThat(familiar.getRelacion()).isEqualTo("Amigo");
     }
+
+    @Test
+    void getEdad_DeberiaRetornarCero_SiAnioNacimientoEsNull() {
+        Familiar familiar = Familiar.builder().anioNacimiento(null).build();
+        assertThat(familiar.getEdad()).isEqualTo(0);
+    }
+
+    @Test
+    void getEdad_DeberiaCalculadEdad_SiAnioExiste() {
+        int anioPasado = java.time.Year.now().getValue() - 5;
+        Familiar familiar = Familiar.builder().anioNacimiento(anioPasado).build();
+        assertThat(familiar.getEdad()).isEqualTo(5);
+    }
 }
