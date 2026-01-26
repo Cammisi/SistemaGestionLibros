@@ -236,14 +236,29 @@ class ReciboPdfServiceTest {
     @Test
     void generarRecibo_DeberiaLanzarRuntimeException_SiFallaItext() {
         // GIVEN
-        // Forzamos un objeto que cause error (ej: Venta nula dentro de cuota, aunque es difícil mockear Itext estático)
-        // La forma más fácil de cubrir el catch(Exception e) es simular un error en datos críticos
-        Cuota cuotaSinVenta = Cuota.builder().id(1L).venta(null).build();
+        // Creamos una estructura de datos VÁLIDA para que pase los primeros gets
+        Cliente cliente = Cliente.builder().nombre("A").apellido("B").build();
+        Venta venta = Venta.builder().cliente(cliente).nroFactura("F-Error").detalles(List.of()).build();
 
-        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuotaSinVenta));
+        // Pero hacemos que la cuota tenga un dato CRÍTICO que al usarse en el PDF cause error
+        // O mejor aún: Simplemente verificamos que ante una excepción no controlada (como NPE por datos incompletos),
+        // el servicio la envuelva en RuntimeException o la deje pasar.
+
+        // Estrategia: Forzar un error interno pasando un objeto incompleto que pase el primer filtro
+        // pero falle al construir el párrafo.
+
+        Cuota cuotaMalformada = Cuota.builder()
+                .id(1L)
+                .venta(venta)
+                .numeroCuota(null) // <--- Esto causará NPE al hacer "Cuota Nro " + null
+                .montoCuota(BigDecimal.TEN)
+                .build();
+
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuotaMalformada));
+        when(cuotaRepository.findByVentaId(1L)).thenReturn(List.of(cuotaMalformada));
 
         // WHEN & THEN
-        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaSinVenta))
+        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaMalformada))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Error al generar PDF");
     }
