@@ -51,4 +51,9 @@ public class CuotaService {
             ventaRepository.save(venta);
         }
     }
+
+    public Cuota buscarPorId(Long id) {
+        return cuotaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cuota no encontrada con ID: " + id));
+    }
 }
