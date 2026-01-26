@@ -1,59 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.net.URL?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 
-<AnchorPane prefHeight="500.0" prefWidth="600.0" styleClass="fondo-oscuro" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.libros.gestion_cliente.ui.controller.LibroFormController">
+<VBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: #3c3c3c; -fx-padding: 30;"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.libros.gestion_cliente.ui.controller.LibroFormController">
 
     <stylesheets>
         <URL value="@../css/styles.css" />
     </stylesheets>
 
-    <VBox spacing="20" alignment="CENTER_LEFT" AnchorPane.bottomAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20">
+    <Label text="Nuevo Libro" styleClass="label-titulo" style="-fx-font-size: 20px;"/>
 
-        <Label text="Nuevo Libro" styleClass="label-titulo" />
-
-        <VBox spacing="5">
-            <Label text="ISBN" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-            <TextField fx:id="txtIsbn" promptText="Ej: 978-3-16-148410-0" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+    <HBox spacing="15">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Título *" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtTitulo" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
         </VBox>
-
-        <VBox spacing="5">
-            <Label text="Título" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-            <TextField fx:id="txtTitulo" promptText="Título del libro" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Autor *" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtAutor" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
         </VBox>
+    </HBox>
 
-        <VBox spacing="5">
-            <Label text="Autor" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-            <TextField fx:id="txtAutor" promptText="Nombre del Autor" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+    <HBox spacing="15">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="ISBN" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtIsbn" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
         </VBox>
-
-        <VBox spacing="5">
-            <Label text="Temática / Género" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-            <TextField fx:id="txtTematica" promptText="Ej: Cocina, Historia, Programación..." style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Precio Base *" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtPrecio" promptText="0.00" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
         </VBox>
+    </HBox>
 
-        <HBox spacing="20">
-            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                <Label text="Precio Base ($)" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-                <TextField fx:id="txtPrecio" promptText="0.00" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
-            </VBox>
+    <HBox spacing="15">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Stock Inicial *" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtStock" promptText="Cantidad" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Cant. Volúmenes" style="-fx-text-fill: #cccccc;"/>
+            <TextField fx:id="txtVolumenes" promptText="Ej: 1" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
+        </VBox>
+    </HBox>
 
-            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                <Label text="Stock Inicial" style="-fx-text-fill: #cccccc; -fx-font-weight: bold;"/>
-                <TextField fx:id="txtStock" promptText="0" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
-            </VBox>
-        </HBox>
-
-        <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
-            <Button text="Cancelar" onAction="#cancelar" style="-fx-background-color: #666666; -fx-text-fill: white; -fx-cursor: hand;" />
-            <Button text="Guardar Libro" onAction="#guardar" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
-        </HBox>
-
+    <VBox spacing="5">
+        <Label text="Temática / Género" style="-fx-text-fill: #cccccc;"/>
+        <TextField fx:id="txtTematica" promptText="Ej: Historia, Cocina..." style="-fx-background-color: #505050; -fx-text-fill: white;"/>
     </VBox>
-</AnchorPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
+        <Button text="Cancelar" onAction="#cancelar" style="-fx-background-color: #555555;"/>
+        <Button text="Guardar Libro" onAction="#guardarLibro" styleClass="boton-verde"/>
+    </HBox>
+
+</VBox>

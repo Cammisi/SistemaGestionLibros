@@ -17,7 +17,13 @@ Label {
   -fx-text-fill: white;
   -fx-font-size: 24px;
   -fx-font-weight: bold;
-  -fx-padding: 0 0 20 0;
+}
+
+.label-titulo {
+  -fx-font-size: 20px;
+  -fx-font-weight: bold;
+  -fx-text-fill: white; /* O el color que uses */
+  -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1); /* Sombra opcional */
 }
 
 /* =========================================

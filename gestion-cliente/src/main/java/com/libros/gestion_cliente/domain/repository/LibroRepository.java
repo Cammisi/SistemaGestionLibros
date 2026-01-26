@@ -11,11 +11,10 @@ public interface LibroRepository {
     <S extends Libro> List<S> saveAll(Iterable<S> libros);
     Optional<Libro> findById(Long id);
     Optional<Libro> findByIsbn(String isbn);
-    Optional<Libro> findByTituloIgnoreCase(String titulo);
+    List<Libro> findByTituloContainingIgnoreCase(String tituloPart);
     List<Libro> findAll();
     void deleteById(Long id);
     boolean existsByIsbn(String isbn);
     Page<Libro> findAll(Pageable pageable);
-
-    List<Libro> findByTituloContainingIgnoreCase(String titulo);
+    List<Libro> findByTituloContainingIgnoreCaseOrAutorContainingIgnoreCase(String titulo, String autor);
 }

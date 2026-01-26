@@ -52,9 +52,9 @@
 
             <TableView fx:id="tablaCarrito" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colCarritoTitulo" text="Libro" />
-                    <TableColumn fx:id="colCarritoCantidad" text="Cantidad" />
-                    <TableColumn fx:id="colCarritoSubtotal" text="Subtotal" />
+                    <TableColumn fx:id="colCarritoTitulo" text="Libro" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCarritoCantidad" text="Cantidad" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCarritoSubtotal" text="Subtotal" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colCarritoEliminar" text="Acción" style="-fx-alignment: CENTER;" />
                 </columns>
                 <columnResizePolicy>

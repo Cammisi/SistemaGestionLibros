@@ -3,6 +3,8 @@ package com.libros.gestion_cliente.domain.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Year;
+
 @Entity
 @Table(name = "familiares")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -28,4 +30,9 @@ public class Familiar {
 
     @Column(columnDefinition = "TEXT")
     private String intereses;
+
+    public int getEdad() {
+        if (anioNacimiento == null) return 0;
+        return Year.now().getValue() - anioNacimiento;
+    }
 }

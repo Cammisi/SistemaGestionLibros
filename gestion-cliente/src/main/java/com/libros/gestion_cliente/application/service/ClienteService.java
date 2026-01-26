@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 public class ClienteService {
@@ -29,6 +31,7 @@ public class ClienteService {
                 .localidad(request.getLocalidad())
                 .telefono(request.getTelefono())
                 .interesesPersonales(request.getInteresesPersonales())
+                .fechaAlta(request.getFechaAlta() != null ? request.getFechaAlta() : LocalDate.now())
                 .build();
 
         return clienteRepository.save(cliente);

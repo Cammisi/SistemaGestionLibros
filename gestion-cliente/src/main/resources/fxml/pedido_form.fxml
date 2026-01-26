@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+
+<VBox spacing="20" alignment="CENTER_LEFT" prefWidth="500" prefHeight="350"
+      style="-fx-background-color: #3c3c3c; -fx-padding: 30;"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.libros.gestion_cliente.ui.controller.PedidoFormController">
+
+    <stylesheets>
+        <URL value="@../css/styles.css" />
+    </stylesheets>
+
+    <Label text="Registrar Pedido Especial" styleClass="label-titulo" style="-fx-font-size: 20px;"/>
+
+    <VBox spacing="5">
+        <Label text="Cliente Solicitante:" style="-fx-text-fill: white;"/>
+        <ComboBox fx:id="cmbCliente" editable="true" maxWidth="Infinity" promptText="Escriba para buscar..."/>
+    </VBox>
+
+    <VBox spacing="5" VBox.vgrow="ALWAYS">
+        <Label text="Libro / Descripción del Pedido:" style="-fx-text-fill: white;"/>
+        <TextArea fx:id="txtDescripcion" wrapText="true"
+                  promptText="Ej: Título exacto, Autor, Editorial específica..."
+                  style="-fx-control-inner-background: #505050; -fx-text-fill: white;"/>
+    </VBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#cancelar" style="-fx-background-color: #555555; -fx-text-fill: white;"/>
+        <Button text="Registrar Pedido" onAction="#guardar" styleClass="boton-verde"/>
+    </HBox>
+
+</VBox>

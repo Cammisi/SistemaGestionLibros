@@ -2,6 +2,7 @@ package com.libros.gestion_cliente.ui.controller;
 
 import com.libros.gestion_cliente.application.service.ClienteService;
 import com.libros.gestion_cliente.domain.model.Cliente;
+import com.libros.gestion_cliente.domain.repository.ClienteRepository;
 import com.libros.gestion_cliente.ui.model.ClienteFx;
 import com.libros.gestion_cliente.ui.util.NotificationUtil;
 import javafx.animation.FadeTransition;
@@ -12,10 +13,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +21,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import java.util.List;
 
 import java.io.IOException;
 
@@ -31,6 +30,7 @@ import java.io.IOException;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final ClienteRepository clienteRepository;
     private final ApplicationContext applicationContext;
 
     @FXML private BorderPane rootPane;
@@ -42,6 +42,8 @@ public class ClienteController {
     @FXML private TableColumn<ClienteFx, String> colTelefono;
     @FXML private Label lblPagina;
     @FXML private ProgressIndicator spinnerCarga;
+
+    @FXML private TextField txtBuscar;
 
     private int paginaActual = 0;
     private final int TAMANO_PAGINA = 15;
@@ -64,6 +66,39 @@ public class ClienteController {
         fade.setToValue(1);
         fade.play();
 
+        cargarClientes();
+
+        txtBuscar.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.isBlank()) {
+                cargarClientes();
+            }
+        });
+    }
+
+    @FXML
+    public void buscarCliente(ActionEvent event) {
+        String termino = txtBuscar.getText();
+        if (termino == null || termino.isBlank()) {
+            cargarClientes();
+            return;
+        }
+
+        spinnerCarga.setVisible(true);
+
+        // --- CAMBIO AQUÍ: Usamos el nuevo método con @Query ---
+        List<Cliente> resultados = clienteRepository.buscarPorNombreCompleto(termino.trim());
+        // -----------------------------------------------------
+
+        var clientesFx = resultados.stream().map(ClienteFx::new).toList();
+        tablaClientes.setItems(FXCollections.observableArrayList(clientesFx));
+
+        lblPagina.setText("Resultados de búsqueda: " + resultados.size());
+        spinnerCarga.setVisible(false);
+    }
+
+    @FXML
+    public void limpiarBusqueda(ActionEvent event) {
+        txtBuscar.clear();
         cargarClientes();
     }
 

@@ -4,6 +4,7 @@ import com.libros.gestion_cliente.domain.model.Cliente;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query; // Importante para la consulta custom
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public interface ClienteRepository {
 
     // Búsqueda por localidad (Spring Data lo implementa solo por el nombre)
     List<Cliente> findByLocalidadContainingIgnoreCase(String localidad);
+    List<Cliente> findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCase(String nombre, String apellido);
 
     // --- NUEVOS MÉTODOS PARA REPORTES ---
 
@@ -35,4 +37,14 @@ public interface ClienteRepository {
             "(SELECT v FROM Venta v WHERE v.cliente = c AND v.estado = 'EN_PROCESO') " +
             "ORDER BY c.localidad, c.apellido")
     List<Cliente> findClientesLibresDeDeuda();
+
+    // QUERY INTELIGENTE:
+    // 1. Busca en el nombre suelto.
+    // 2. Busca en el apellido suelto.
+    // 3. CONCATENA (Une) nombre y apellido y busca ahí (Para casos como "Juan Perez")
+    @Query("SELECT c FROM Cliente c WHERE " +
+            "LOWER(c.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
+            "LOWER(c.apellido) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
+            "LOWER(CONCAT(c.nombre, ' ', c.apellido)) LIKE LOWER(CONCAT('%', :texto, '%'))")
+    List<Cliente> buscarPorNombreCompleto(@Param("texto") String texto);
 }

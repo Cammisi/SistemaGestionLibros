@@ -74,6 +74,7 @@ CREATE TABLE pedidos_especiales (
     descripcion VARCHAR(200),
     estado VARCHAR(20),
 	cliente_id BIGINT,
+    fecha_pedido DATE NOT NULL DEFAULT CURRENT_DATE,
 	CONSTRAINT fk_pedidos_especiales_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
 

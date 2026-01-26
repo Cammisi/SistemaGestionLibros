@@ -49,6 +49,14 @@ public class Cliente {
     @Builder.Default
     private List<Familiar> familiares = new ArrayList<>();
 
+    @PrePersist
+    public void prePersist() {
+        // Solo asignamos la fecha actual SI NO VIENE una fecha manual
+        if (this.fechaAlta == null) {
+            this.fechaAlta = LocalDate.now();
+        }
+    }
+
     public void addFamiliar(Familiar familiar) {
         familiares.add(familiar);
         familiar.setCliente(this);
@@ -57,5 +65,17 @@ public class Cliente {
     public void removeFamiliar(Familiar familiar) {
         familiares.remove(familiar);
         familiar.setCliente(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Cliente)) return false;
+        return id != null && id.equals(((Cliente) o).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

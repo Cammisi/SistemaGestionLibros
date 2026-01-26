@@ -5,6 +5,7 @@ import com.libros.gestion_cliente.domain.model.Libro;
 import com.libros.gestion_cliente.domain.repository.LibroRepository;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +18,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import java.util.List;
 
 import java.io.IOException;
 
@@ -28,9 +30,8 @@ public class LibroController {
     private final LibroRepository libroRepository;
     private final ApplicationContext applicationContext;
 
-    @FXML private BorderPane rootPane; // Asegúrate que en el FXML el root se llame fx:id="rootPane"
+    @FXML private BorderPane rootPane;
     @FXML private TableView<Libro> tablaLibros;
-    // ... tus columnas ...
     @FXML private TableColumn<Libro, String> colIsbn;
     @FXML private TableColumn<Libro, String> colTitulo;
     @FXML private TableColumn<Libro, String> colAutor;
@@ -38,21 +39,24 @@ public class LibroController {
     @FXML private TableColumn<Libro, Double> colPrecio;
     @FXML private TableColumn<Libro, Integer> colStock;
     @FXML private TableColumn<Libro, Void> colAccionStock;
-
+    @FXML private TextField txtBuscar;
     @FXML private Label lblPagina;
 
     private int paginaActual = 0;
-    private int totalPaginas = 0; // <--- NUEVA VARIABLE DE CONTROL
+    private int totalPaginas = 0;
     private final int TAMANO_PAGINA = 10;
 
     @FXML
     public void initialize() {
         configurarTabla();
         cargarLibros();
+
+        txtBuscar.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isBlank()) cargarLibros();
+        });
     }
 
     private void configurarTabla() {
-        // ... (Tu configuración de columnas igual que antes) ...
         colIsbn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getIsbn()));
         colTitulo.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTitulo()));
         colAutor.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getAutor()));
@@ -77,6 +81,27 @@ public class LibroController {
         });
     }
 
+    @FXML
+    public void buscarLibro(ActionEvent event) {
+        String termino = txtBuscar.getText();
+        if (termino == null || termino.isBlank()) {
+            cargarLibros();
+            return;
+        }
+
+        // Búsqueda inteligente: Título O Autor
+        List<Libro> resultados = libroRepository.findByTituloContainingIgnoreCaseOrAutorContainingIgnoreCase(termino.trim(), termino.trim());
+
+        tablaLibros.setItems(FXCollections.observableArrayList(resultados));
+        lblPagina.setText("Resultados: " + resultados.size());
+    }
+
+    @FXML
+    public void limpiarBusqueda(ActionEvent event) {
+        txtBuscar.clear();
+        cargarLibros(); // Vuelve a la paginación normal
+    }
+
     private void sumarStock(Libro libro) {
         libro.setStock(libro.getStock() + 1);
         libroRepository.save(libro);
@@ -85,12 +110,8 @@ public class LibroController {
 
     private void cargarLibros() {
         Page<Libro> pagina = libroService.listarLibros(PageRequest.of(paginaActual, TAMANO_PAGINA));
-
-        this.totalPaginas = pagina.getTotalPages(); // <--- ACTUALIZAMOS EL TOTAL REAL
-
+        this.totalPaginas = pagina.getTotalPages();
         tablaLibros.getItems().setAll(pagina.getContent());
-
-        // Evitar "Página 1 de 0" si está vacío
         int displayTotal = totalPaginas > 0 ? totalPaginas : 1;
         lblPagina.setText("Página " + (paginaActual + 1) + " de " + displayTotal);
     }
@@ -105,7 +126,6 @@ public class LibroController {
 
     @FXML
     public void siguiente() {
-        // CORRECCIÓN: Solo avanza si NO es la última página (recordar que es índice 0)
         if (paginaActual < totalPaginas - 1) {
             paginaActual++;
             cargarLibros();
@@ -127,8 +147,6 @@ public class LibroController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             loader.setControllerFactory(applicationContext::getBean);
             Parent root = loader.load();
-
-            // Usamos tablaLibros para obtener la escena porque siempre está visible
             Stage stage = (Stage) tablaLibros.getScene().getWindow();
             stage.getScene().setRoot(root);
         } catch (IOException e) {

@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,4 +29,6 @@ public class CrearClienteRequest {
     private String telefono;
     private String localidad;
     private String interesesPersonales;
+
+    private LocalDate fechaAlta;
 }

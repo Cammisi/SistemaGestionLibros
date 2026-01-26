@@ -1,5 +1,6 @@
 package com.libros.gestion_cliente.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "ventas")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter @Setter @Data @NoArgsConstructor @AllArgsConstructor @Builder
 @EqualsAndHashCode(of = "id")
 public class Venta {
 
@@ -39,7 +40,7 @@ public class Venta {
     private EstadoVenta estado = EstadoVenta.EN_PROCESO;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
+    @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
     // SQL: fecha_venta DATE DEFAULT CURRENT_DATE
@@ -47,14 +48,21 @@ public class Venta {
     @Builder.Default
     private LocalDate fechaVenta = LocalDate.now();
 
-    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<DetalleVenta> detalles = new ArrayList<>();
-
     // SQL: monto_total DECIMAL(10, 2) NOT NULL
     @Column(name = "monto_total", nullable = false, precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal montoTotal = BigDecimal.ZERO;
+
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DetalleVenta> detalles = new ArrayList<>();
+
+    // --- CORRECCIÓN AQUÍ: RELACIÓN INVERSA CON CUOTAS ---
+    // FetchType.LAZY es lo estándar, pero si te da LazyInitializationException en el reporte,
+    // puedes usar EAGER o asegurarte de traerlas en la query.
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore // Para evitar ciclos infinitos al serializar a JSON
+    private List<Cuota> cuotas;
 
     // --- Helpers ---
     public void addDetalle(DetalleVenta detalle) {
