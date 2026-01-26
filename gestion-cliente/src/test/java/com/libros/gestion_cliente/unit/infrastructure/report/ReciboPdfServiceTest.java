@@ -3,15 +3,20 @@ package com.libros.gestion_cliente.unit.infrastructure.report;
 import com.libros.gestion_cliente.domain.model.*;
 import com.libros.gestion_cliente.domain.repository.CuotaRepository;
 import com.libros.gestion_cliente.infrastructure.report.ReciboPdfService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +37,36 @@ class ReciboPdfServiceTest {
     @InjectMocks
     private ReciboPdfService reciboPdfService;
 
+    // --- SOLUCIÓN AL PROBLEMA DE I/O EN CI ---
+    @TempDir
+    Path tempDir;
+
+    private String originalUserHome;
+
+    @BeforeEach
+    void setUp() {
+        // 1. Guardamos el user.home original
+        originalUserHome = System.getProperty("user.home");
+
+        // 2. Cambiamos user.home para que apunte a la carpeta temporal del test
+        System.setProperty("user.home", tempDir.toString());
+
+        // 3. Creamos la carpeta "Desktop" dentro del tempDir para que el servicio la encuentre
+        File desktopMock = new File(tempDir.toFile(), "Desktop");
+        if (!desktopMock.exists()) {
+            desktopMock.mkdir();
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        // 4. Restauramos el user.home original para no afectar otros tests
+        if (originalUserHome != null) {
+            System.setProperty("user.home", originalUserHome);
+        }
+    }
+    // ------------------------------------------
+
     @Test
     void generarRecibo_DeberiaEjecutarseCorrectamente_CuandoDatosEstanCompletos() {
         // GIVEN
@@ -45,7 +80,9 @@ class ReciboPdfServiceTest {
         // WHEN
         try {
             reciboPdfService.generarRecibo(cuota);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace(); // Imprimir error si falla para depurar
+        }
 
         // THEN
         verify(cuotaRepository, atLeastOnce()).findById(1L);
@@ -72,10 +109,10 @@ class ReciboPdfServiceTest {
 
     @Test
     void generarRecibo_DeberiaCambiarEstado_SiEstaPendiente() {
-        // GIVEN - Datos completos para evitar fallos en generación de PDF
+        // GIVEN - Datos completos
         Cliente cliente = Cliente.builder()
                 .nombre("Test").apellido("Pendiente")
-                .direccion("Calle Falsa 123").localidad("Madrid") // Datos necesarios
+                .direccion("Calle Falsa 123").localidad("Madrid")
                 .build();
 
         Libro libro = Libro.builder().titulo("Libro Mock").build();
@@ -84,7 +121,7 @@ class ReciboPdfServiceTest {
         Venta venta = Venta.builder()
                 .nroFactura("F-001")
                 .cliente(cliente)
-                .detalles(List.of(detalle)) // Lista no vacía para evitar errores de índice
+                .detalles(List.of(detalle))
                 .build();
 
         Cuota cuota = Cuota.builder()
@@ -99,10 +136,11 @@ class ReciboPdfServiceTest {
         when(cuotaRepository.findByVentaId(any())).thenReturn(List.of(cuota));
 
         // WHEN
+        // Al haber configurado el TempDir, la escritura del PDF debería funcionar y permitir que el código avance
         try {
             reciboPdfService.generarRecibo(cuota);
         } catch (Exception e) {
-            // Ignoramos errores de I/O (escritura en disco), pero esperamos que la lógica previa (save) se ejecute
+            e.printStackTrace();
         }
 
         // THEN
@@ -179,7 +217,6 @@ class ReciboPdfServiceTest {
         when(cuotaRepository.findByVentaId(any())).thenReturn(List.of(cuota));
 
         try { reciboPdfService.generarRecibo(cuota); } catch (Exception e) {}
-        // Verification implicit - ensuring no exception
         verify(cuotaRepository, atLeastOnce()).findById(1L);
     }
 }
