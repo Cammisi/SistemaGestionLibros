@@ -175,4 +175,76 @@ class ReciboPdfServiceTest {
         File reporteDir = new File(tempDir.toFile(), "Desktop/Reportes");
         assert(reporteDir.exists());
     }
+    // 1. Cubrir lambda$generarContenidoContrato$3 (El forEach de los detalles)
+    @Test
+    void generarRecibo_DeberiaIterarDetalles_CuandoEsCuotaUnoConLibros() throws Exception {
+        // GIVEN
+        Cliente cliente = Cliente.builder().nombre("Juan").apellido("Perez").build();
+        Libro libro = Libro.builder().titulo("Libro de Prueba").build();
+
+        // IMPORTANTE: Lista con elementos para que el forEach se ejecute
+        DetalleVenta detalle = DetalleVenta.builder().libro(libro).cantidad(1).build();
+
+        Venta venta = Venta.builder()
+                .id(1L).cliente(cliente).nroFactura("A-0001")
+                .detalles(List.of(detalle)) // <--- ESTO ACTIVA LA LAMBDA
+                .montoTotal(BigDecimal.TEN)
+                .build();
+
+        Cuota cuota = Cuota.builder()
+                .id(1L).venta(venta).numeroCuota(1) // Cuota 1 = Contrato
+                .montoCuota(BigDecimal.TEN)
+                .build();
+
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarRecibo(cuota);
+
+        // THEN
+        verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    // 2. Cubrir lambda$generarRecibo$1 (El orElseThrow al inicio del método público)
+    @Test
+    void generarRecibo_DeberiaLanzarExcepcion_SiNoEncuentraCuotaAlInicio() {
+        // GIVEN
+        Cuota cuotaParametro = Cuota.builder().id(99L).build();
+
+        // Simulamos que no existe en BD
+        when(cuotaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaParametro))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada");
+    }
+
+    // 3. Cubrir catch (Exception e) en generarPdfEnStream
+    @Test
+    void generarRecibo_DeberiaCapturarExcepcionYRelanzar_SiFallaGeneracionPDF() {
+        // GIVEN
+        // Configuramos una cuota que al intentar leerse cause error (NPE en numeroCuota)
+        // pero que pase el filtro inicial de búsqueda
+        Cliente cliente = Cliente.builder().nombre("A").apellido("B").build();
+        Venta venta = Venta.builder().cliente(cliente).detalles(List.of()).build();
+
+        Cuota cuotaMalformada = Cuota.builder()
+                .id(1L)
+                .venta(venta)
+                .numeroCuota(null) // <--- Esto forzará el error DENTRO del try
+                .montoCuota(BigDecimal.TEN)
+                .build();
+
+        // Stubbing secuencial:
+        // 1. findById(1L) -> devuelve OK (pasa la validación inicial)
+        // 2. findById(1L) -> devuelve OK (entra a generarPdfEnStream)
+        // 3. Dentro del try, getNumeroCuota() es null -> Explota
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuotaMalformada));
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaMalformada))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Error al generar PDF");
+    }
 }

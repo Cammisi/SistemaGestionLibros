@@ -98,44 +98,13 @@ class CuotaServiceTest {
     @Test
     void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste() {
         // GIVEN
-        Long idInexistente = 99L;
-        when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
+        Long id = 99L;
+        when(cuotaRepository.findById(id)).thenReturn(Optional.empty());
 
         // WHEN & THEN
-        // AssertJ ejecuta la lambda interna, cubriendo la línea amarilla
-        assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
+        // Usamos assertThatThrownBy para asegurar que se instancia la excepción
+        assertThatThrownBy(() -> cuotaService.buscarPorId(id))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Cuota no encontrada con ID: 99");
-    }
-
-    @Test
-    void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste_bis() {
-        // GIVEN
-        Long idInexistente = 99L;
-        // Simulamos que la base de datos devuelve vacío
-        when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
-
-        // WHEN & THEN
-        // Esto valida que se ejecute la lambda del .orElseThrow()
-        assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Cuota no encontrada con ID: 99");
-
-        verify(cuotaRepository).findById(idInexistente);
-    }
-
-    @Test
-    void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste_triplicado() {
-        // GIVEN
-        Long idInexistente = 99L;
-        // El repositorio devuelve vacío
-        when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
-
-        // WHEN & THEN
-        // Al usar assertThatThrownBy, AssertJ ejecuta la lambda del servicio,
-        // cubriendo la línea de "new RuntimeException"
-        assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Cuota no encontrada con ID: " + idInexistente);
+                .hasMessage("Cuota no encontrada con ID: " + id);
     }
 }
