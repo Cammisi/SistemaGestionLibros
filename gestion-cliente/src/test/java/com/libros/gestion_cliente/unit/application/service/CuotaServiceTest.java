@@ -84,17 +84,7 @@ class CuotaServiceTest {
                 .isInstanceOf(RuntimeException.class);
     }
 
-    @Test
-    void buscarPorId_DeberiaLanzarExcepcion_CuandoNoExiste() {
-        // GIVEN
-        when(cuotaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        // WHEN & THEN
-        assertThatThrownBy(() -> cuotaService.buscarPorId(99L))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Cuota no encontrada con ID: 99");
-    }
-
+    // Consolidated test for buscarPorId exception
     @Test
     void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste() {
         // GIVEN
@@ -102,9 +92,28 @@ class CuotaServiceTest {
         when(cuotaRepository.findById(id)).thenReturn(Optional.empty());
 
         // WHEN & THEN
-        // Usamos assertThatThrownBy para asegurar que se instancia la excepción
         assertThatThrownBy(() -> cuotaService.buscarPorId(id))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Cuota no encontrada con ID: " + id);
+
+        // Explicit verify to ensure the mock was called
+        verify(cuotaRepository).findById(id);
+    }
+
+    // Add success test for buscarPorId to ensure full method coverage
+    @Test
+    void buscarPorId_DeberiaRetornarCuota_CuandoExiste() {
+        // GIVEN
+        Long id = 1L;
+        Cuota cuota = Cuota.builder().id(id).build();
+        when(cuotaRepository.findById(id)).thenReturn(Optional.of(cuota));
+
+        // WHEN
+        Cuota result = cuotaService.buscarPorId(id);
+
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(id);
+        verify(cuotaRepository).findById(id);
     }
 }
