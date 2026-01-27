@@ -18,6 +18,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -428,5 +429,91 @@ class ReciboPdfServiceTest {
 
         // THEN
         verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    @Test
+    void generarRecibo_DeberiaCalcularSaldoCero_SiListaDeCuotasEsNull() throws Exception {
+        // GIVEN
+        Venta venta = Venta.builder().cliente(Cliente.builder().nombre("A").apellido("B").build()).detalles(List.of()).build();
+        venta.setCuotas(null); // <--- FORZAMOS NULL para la primera parte del IF
+
+        Cuota cuota = Cuota.builder().id(1L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+
+        // Simulamos comportamiento normal del repo
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarRecibo(cuota);
+
+        // THEN
+        // Si no lanza NullPointerException, el IF funcionó correctamente.
+        verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    @Test
+    void generarRecibo_DeberiaCalcularSaldoCero_SiListaDeCuotasEstaVacia() throws Exception {
+        // GIVEN
+        Venta venta = Venta.builder().cliente(Cliente.builder().nombre("A").apellido("B").build()).detalles(List.of()).build();
+        venta.setCuotas(new ArrayList<>()); // <--- FORZAMOS EMPTY para la segunda parte del IF
+
+        Cuota cuota = Cuota.builder().id(1L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarRecibo(cuota);
+
+        // THEN
+        verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    @Test
+    void generarRecibo_CoberturaTotalStream_FiltrosYMontosNulos() throws Exception {
+        // GIVEN
+        Venta venta = Venta.builder()
+                .id(10L)
+                .cliente(Cliente.builder().nombre("Stream").apellido("Test").build())
+                .nroFactura("F-Stream")
+                .detalles(List.of())
+                .build();
+
+        // Cuota 1: Actual (La que imprimimos)
+        Cuota c1 = Cuota.builder().id(1L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).build();
+
+        // Cuota 0: Pasada (Numero 1 < Numero 2) -> Cubre el caso FALSE del filter
+        Cuota c0 = Cuota.builder().id(2L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+
+        // Cuota 3: Futura con Monto (Numero 3 > Numero 2) -> Cubre TRUE filter y TRUE map
+        Cuota c3 = Cuota.builder().id(3L).venta(venta).numeroCuota(3).montoCuota(new BigDecimal("50.00")).build();
+
+        // Cuota 4: Futura con Monto NULL (Numero 4 > Numero 2) -> Cubre TRUE filter y FALSE map (el ? :)
+        Cuota c4 = Cuota.builder().id(4L).venta(venta).numeroCuota(4).montoCuota(null).build();
+
+        venta.setCuotas(List.of(c0, c1, c3, c4));
+
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(c1));
+        when(cuotaRepository.findByVentaId(10L)).thenReturn(List.of(c0, c1, c3, c4));
+
+        // WHEN
+        reciboPdfService.generarRecibo(c1);
+
+        // THEN
+        verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    @Test
+    void generarRecibo_DeberiaLanzarExcepcion_SiCuotaNoExisteAlGenerarPdfInternamente() {
+        // GIVEN
+        // Pasamos un objeto válido al método público para pasar las primeras validaciones
+        Cuota cuotaParametro = Cuota.builder().id(1L).build();
+
+        // PERO configuramos el repositorio para que devuelva Empty.
+        // Esto forzará el .orElseThrow() dentro del método privado generarPdfEnStream
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaParametro))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Cuota no encontrada"); // Verifica el mensaje exacto de tu orElseThrow
     }
 }

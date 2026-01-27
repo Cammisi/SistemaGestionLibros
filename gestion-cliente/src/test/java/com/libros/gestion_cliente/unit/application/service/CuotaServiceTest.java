@@ -109,4 +109,20 @@ class CuotaServiceTest {
 
         verify(cuotaRepository).findById(idInexistente);
     }
+
+    @Test
+    void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste_bis() {
+        // GIVEN
+        Long idInexistente = 99L;
+        // Simulamos que la base de datos devuelve vacío
+        when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        // Esto valida que se ejecute la lambda del .orElseThrow()
+        assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada con ID: 99");
+
+        verify(cuotaRepository).findById(idInexistente);
+    }
 }
