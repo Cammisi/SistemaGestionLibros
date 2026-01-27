@@ -516,4 +516,45 @@ class ReciboPdfServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Cuota no encontrada"); // Verifica el mensaje exacto de tu orElseThrow
     }
+
+    // 1. Cubrir la rama derecha del IF: "|| todasLasCuotas.isEmpty()"
+    @Test
+    void generarRecibo_DeberiaCalcularSaldoCero_SiListaDeCuotasEstaVacia_NoNula() throws Exception {
+        // GIVEN
+        Venta venta = Venta.builder()
+                .cliente(Cliente.builder().nombre("A").apellido("B").build())
+                .nroFactura("F-Empty")
+                .detalles(List.of())
+                .build();
+
+        // IMPORTANTE: Inicializamos como lista vacía (no null)
+        venta.setCuotas(new ArrayList<>());
+
+        Cuota cuota = Cuota.builder().id(1L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+
+        // El repositorio devuelve la cuota (paso 1), pero la lista dentro de venta está vacía
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarRecibo(cuota);
+
+        // THEN
+        // Si llega aquí sin error, cubrió la rama isEmpty()
+        verify(cuotaRepository, atLeastOnce()).findById(1L);
+    }
+
+    // 2. Cubrir la lambda del error interno: "() -> new RuntimeException..."
+    @Test
+    void generarRecibo_DeberiaEjecutarLambdaDeExcepcion_CuandoRepoDevuelveVacioInternamente() {
+        // GIVEN
+        Cuota cuotaParametro = Cuota.builder().id(1L).build();
+
+        // Forzamos que findById devuelva Empty. Esto hará saltar el .orElseThrow
+        when(cuotaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> reciboPdfService.generarRecibo(cuotaParametro))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada");
+    }
 }

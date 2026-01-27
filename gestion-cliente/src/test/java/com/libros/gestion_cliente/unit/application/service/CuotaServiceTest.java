@@ -125,4 +125,19 @@ class CuotaServiceTest {
 
         verify(cuotaRepository).findById(idInexistente);
     }
+
+    @Test
+    void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste_triplicado() {
+        // GIVEN
+        Long idInexistente = 99L;
+        // El repositorio devuelve vacío
+        when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        // Al usar assertThatThrownBy, AssertJ ejecuta la lambda del servicio,
+        // cubriendo la línea de "new RuntimeException"
+        assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada con ID: " + idInexistente);
+    }
 }
