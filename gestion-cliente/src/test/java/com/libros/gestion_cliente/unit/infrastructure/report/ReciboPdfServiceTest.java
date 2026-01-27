@@ -328,9 +328,16 @@ class ReciboPdfServiceTest {
     void generarReciboCuota_DeberiaBuscarYGenerar_CuandoExiste() throws Exception {
         // GIVEN
         Long id = 5L;
+        // Datos completos para evitar NPEs en las llamadas internas
         Cliente cliente = Cliente.builder().nombre("A").apellido("B").build();
         Venta venta = Venta.builder().cliente(cliente).detalles(List.of()).build();
-        Cuota cuota = Cuota.builder().id(id).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+        Cuota cuota = Cuota.builder()
+                .id(id)
+                .venta(venta)
+                .numeroCuota(1) // Importante para evitar NPE
+                .montoCuota(BigDecimal.TEN)
+                .estado(EstadoCuota.PENDIENTE)
+                .build();
 
         when(cuotaRepository.findById(id)).thenReturn(Optional.of(cuota));
         when(cuotaRepository.findByVentaId(any())).thenReturn(List.of(cuota));
@@ -339,7 +346,8 @@ class ReciboPdfServiceTest {
         reciboPdfService.generarReciboCuota(id);
 
         // THEN
-        verify(cuotaRepository).findById(id);
+        // CORRECCIÓN: Usamos atLeastOnce() porque sabemos que se llama múltiples veces internamente
+        verify(cuotaRepository, atLeastOnce()).findById(id);
     }
 
     // 4. Test para generarReciboCuota (Wrapper) - Caso Error (Excepción ID)
