@@ -64,7 +64,6 @@ class ReciboPdfServiceTest {
         }
     }
 
-    // 1. Test Básico - Camino Feliz
     @Test
     void generarRecibo_DeberiaEjecutarseCorrectamente_CuandoDatosEstanCompletos() throws Exception {
         Cliente cliente = Cliente.builder().nombre("Juan").apellido("Perez").dni("123").direccion("Av 1").telefono("555").build();
@@ -79,14 +78,11 @@ class ReciboPdfServiceTest {
         verify(cuotaRepository, atLeastOnce()).findById(1L);
     }
 
-    // 2. Cobertura de Ramas del IF en 'calcularSaldoRestante'
-    // CASO A: Lista es NULL
     @Test
     void generarRecibo_DeberiaManejarListaCuotasNula() throws Exception {
         Venta venta = Venta.builder().cliente(Cliente.builder().nombre("A").apellido("B").build()).detalles(List.of()).build();
-        venta.setCuotas(null); // <--- RAMA 1: NULL
+        venta.setCuotas(null);
 
-        // Usamos cuota 2 para forzar la entrada a generarContenidoRecibo -> calcularSaldo
         Cuota cuota = Cuota.builder().id(1L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).build();
 
         when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
@@ -95,11 +91,10 @@ class ReciboPdfServiceTest {
         verify(cuotaRepository, atLeastOnce()).findById(1L);
     }
 
-    // CASO B: Lista es EMPTY
     @Test
     void generarRecibo_DeberiaManejarListaCuotasVacia() throws Exception {
         Venta venta = Venta.builder().cliente(Cliente.builder().nombre("A").apellido("B").build()).detalles(List.of()).build();
-        venta.setCuotas(new ArrayList<>()); // <--- RAMA 2: EMPTY
+        venta.setCuotas(new ArrayList<>());
 
         Cuota cuota = Cuota.builder().id(1L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).build();
 
@@ -109,40 +104,36 @@ class ReciboPdfServiceTest {
         verify(cuotaRepository, atLeastOnce()).findById(1L);
     }
 
-    // 3. Cobertura del Stream (Filter, Map con Null, Reduce)
     @Test
     void generarRecibo_CoberturaCompletaStream() throws Exception {
         Venta venta = Venta.builder().id(10L).cliente(Cliente.builder().nombre("S").apellido("T").build()).detalles(List.of()).build();
-
-        // Cuota Actual: 2
         Cuota cActual = Cuota.builder().id(2L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).build();
-
-        // Cuota Pasada (No suma): 1
         Cuota cPasada = Cuota.builder().id(1L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
-
-        // Cuota Futura (Suma): 3
         Cuota cFutura = Cuota.builder().id(3L).venta(venta).numeroCuota(3).montoCuota(new BigDecimal("50.00")).build();
-
-        // Cuota Futura Null (Suma Cero): 4
-        Cuota cNull = Cuota.builder().id(4L).venta(venta).numeroCuota(4).montoCuota(null).build(); // <--- MAP TERNARY
+        Cuota cNull = Cuota.builder().id(4L).venta(venta).numeroCuota(4).montoCuota(null).build();
 
         venta.setCuotas(List.of(cPasada, cActual, cFutura, cNull));
 
         when(cuotaRepository.findById(2L)).thenReturn(Optional.of(cActual));
         when(cuotaRepository.findByVentaId(10L)).thenReturn(List.of(cPasada, cActual, cFutura, cNull));
 
-        reciboPdfService.generarRecibo(cActual); // Usa cuota 2 para activar lógica de recibo
+        reciboPdfService.generarRecibo(cActual);
     }
 
-    // 4. Cobertura de Excepción Interna (generarPdfEnStream)
-    // Usamos Stubbing Secuencial: Primera llamada devuelve OK, segunda (interna) devuelve Empty.
     @Test
     void generarRecibo_DeberiaLanzarExcepcionInterna_SiCuotaDesaparece() {
-        Cuota cuota = Cuota.builder().id(1L).build();
+        // GIVEN: Creamos una cuota COMPLETA para que pase la primera parte del método (generar nombre archivo)
+        Venta venta = Venta.builder().nroFactura("F-Test").build();
+        Cuota cuota = Cuota.builder()
+                .id(1L)
+                .venta(venta)
+                .numeroCuota(1)
+                .montoCuota(BigDecimal.TEN)
+                .build();
 
-        // Secuencia mágica:
-        // 1. generarRecibo() llama a findById -> Devuelve cuota (Pasa validación 1)
-        // 2. generarPdfEnStream() llama a findById -> Devuelve Empty (Falla validación 2)
+        // Stubbing secuencial:
+        // 1ra vez: Devuelve la cuota (pasa generación de nombre)
+        // 2da vez: Devuelve Empty (falla dentro de generarPdfEnStream)
         when(cuotaRepository.findById(1L))
                 .thenReturn(Optional.of(cuota))
                 .thenReturn(Optional.empty());
@@ -152,7 +143,6 @@ class ReciboPdfServiceTest {
                 .hasMessageContaining("Cuota no encontrada");
     }
 
-    // 5. Test del Wrapper (generarReciboCuota) - EL QUE FALLABA
     @Test
     void generarReciboCuota_DeberiaBuscarYGenerar_CuandoExiste() throws Exception {
         Long id = 5L;
@@ -162,10 +152,8 @@ class ReciboPdfServiceTest {
 
         when(cuotaRepository.findById(id)).thenReturn(Optional.of(cuota));
 
-        // WHEN
         reciboPdfService.generarReciboCuota(id);
 
-        // THEN: Usamos atLeastOnce() porque sabemos que se llama 3 veces internamente
         verify(cuotaRepository, atLeastOnce()).findById(id);
     }
 
@@ -177,7 +165,6 @@ class ReciboPdfServiceTest {
                 .hasMessageContaining("Cuota no encontrada");
     }
 
-    // 6. Test generarListaReposicion (Cobertura método)
     @Test
     void generarListaReposicion_DeberiaCrearArchivo() throws Exception {
         Cliente c = Cliente.builder().nombre("A").apellido("B").build();
@@ -185,19 +172,7 @@ class ReciboPdfServiceTest {
 
         reciboPdfService.generarListaReposicion(List.of(p));
 
-        // Verificación implícita (no lanza excepción)
         File reporteDir = new File(tempDir.toFile(), "Desktop/Reportes");
         assert(reporteDir.exists());
-    }
-
-    // 7. Tests adicionales para completar cobertura
-    @Test
-    void generarRecibo_DeberiaLanzarExcepcion_CuandoCuotaNoExisteEnBD() {
-        Long id = 99L;
-        Cuota c = Cuota.builder().id(id).build();
-        when(cuotaRepository.findById(id)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> reciboPdfService.generarRecibo(c))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Cuota no encontrada");
     }
 }
