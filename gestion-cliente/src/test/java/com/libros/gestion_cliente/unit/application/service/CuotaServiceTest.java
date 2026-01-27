@@ -102,12 +102,10 @@ class CuotaServiceTest {
         when(cuotaRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // WHEN & THEN
-        // Esta versión verifica la excepción y el mensaje al mismo tiempo
+        // AssertJ ejecuta la lambda interna, cubriendo la línea amarilla
         assertThatThrownBy(() -> cuotaService.buscarPorId(idInexistente))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Cuota no encontrada con ID: 99");
-
-        verify(cuotaRepository).findById(idInexistente);
+                .hasMessage("Cuota no encontrada con ID: 99");
     }
 
     @Test
