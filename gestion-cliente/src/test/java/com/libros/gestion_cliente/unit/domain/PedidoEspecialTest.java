@@ -1,40 +1,37 @@
 package com.libros.gestion_cliente.unit.domain;
 
-import com.libros.gestion_cliente.domain.model.Cliente;
-import com.libros.gestion_cliente.domain.model.EstadoPedido;
 import com.libros.gestion_cliente.domain.model.PedidoEspecial;
 import org.junit.jupiter.api.Test;
-
+import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PedidoEspecialTest {
 
     @Test
-    void deberiaCrearPedidoConEstadoInicialPendiente() {
+    void prePersist_DeberiaAsignarFechaActual_SiEsNula() {
         // GIVEN
-        Cliente cliente = new Cliente();
+        PedidoEspecial pedido = new PedidoEspecial();
+        pedido.setFechaPedido(null); // Explicitamente nula
 
         // WHEN
-        PedidoEspecial pedido = PedidoEspecial.builder()
-                .cliente(cliente)
-                .descripcion("Libro importado")
-                .build();
+        pedido.prePersist(); // Llamamos manualmente al ciclo de vida JPA
 
         // THEN
-        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.PENDIENTE); // Default verificado
-        assertThat(pedido.getCliente()).isEqualTo(cliente);
-        assertThat(pedido.getDescripcion()).isEqualTo("Libro importado");
+        assertThat(pedido.getFechaPedido()).isNotNull();
+        assertThat(pedido.getFechaPedido()).isEqualTo(LocalDate.now());
     }
 
     @Test
-    void deberiaCambiarEstadoAEntregado() {
+    void prePersist_NoDeberiaSobreescribirFecha_SiYaExiste() {
         // GIVEN
+        LocalDate fechaAntigua = LocalDate.of(2025, 1, 1);
         PedidoEspecial pedido = new PedidoEspecial();
+        pedido.setFechaPedido(fechaAntigua);
 
         // WHEN
-        pedido.setEstado(EstadoPedido.ENTREGADO);
+        pedido.prePersist();
 
         // THEN
-        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.ENTREGADO);
+        assertThat(pedido.getFechaPedido()).isEqualTo(fechaAntigua);
     }
 }

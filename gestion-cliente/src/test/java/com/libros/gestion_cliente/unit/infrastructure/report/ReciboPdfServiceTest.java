@@ -272,4 +272,86 @@ class ReciboPdfServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Cuota no encontrada con ID: 99");
     }
+
+    // 1. Test para cubrir el ELSE (Cuota 2) y generarContenidoRecibo
+    @Test
+    void generarRecibo_DeberiaGenerarFormatoRecibo_CuandoEsCuotaDos() throws Exception {
+        // GIVEN
+        Cliente cliente = Cliente.builder().nombre("A").apellido("B").build();
+        Venta venta = Venta.builder()
+                .id(1L).cliente(cliente).nroFactura("A-Recibo")
+                .detalles(List.of())
+                .build();
+
+        // Configuración para calcularSaldoRestante:
+        // Creamos 2 cuotas. La actual es la 2.
+        Cuota c1 = Cuota.builder().id(1L).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+        Cuota c2 = Cuota.builder().id(2L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).estado(EstadoCuota.PAGADA).build();
+
+        // Asignamos las cuotas a la venta para que calcularSaldoRestante no de null
+        venta.setCuotas(List.of(c1, c2));
+
+        when(cuotaRepository.findById(2L)).thenReturn(Optional.of(c2));
+        when(cuotaRepository.findByVentaId(1L)).thenReturn(List.of(c1, c2));
+
+        // WHEN
+        // Al ser cuota 2, entra en el ELSE y llama a generarContenidoRecibo
+        reciboPdfService.generarRecibo(c2);
+
+        // THEN
+        verify(cuotaRepository, atLeastOnce()).findById(2L);
+    }
+
+    // 2. Test para cubrir la rama IF (lista nula) en calcularSaldoRestante
+    @Test
+    void generarRecibo_DeberiaManejarListaCuotasNula_EnCalculoSaldo() throws Exception {
+        // GIVEN
+        Venta venta = Venta.builder().cliente(Cliente.builder().nombre("A").apellido("B").build()).detalles(List.of()).build();
+        // Forzamos lista nula en la venta
+        venta.setCuotas(null);
+
+        // Usamos cuota 2 para forzar la entrada a generarContenidoRecibo -> calcularSaldoRestante
+        Cuota cuota = Cuota.builder().id(2L).venta(venta).numeroCuota(2).montoCuota(BigDecimal.TEN).build();
+
+        when(cuotaRepository.findById(2L)).thenReturn(Optional.of(cuota));
+        when(cuotaRepository.findByVentaId(any())).thenReturn(List.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarRecibo(cuota);
+
+        // THEN: No debe lanzar NullPointerException
+        verify(cuotaRepository, atLeastOnce()).findById(2L);
+    }
+
+    // 3. Test para generarReciboCuota (Wrapper) - Caso Éxito
+    @Test
+    void generarReciboCuota_DeberiaBuscarYGenerar_CuandoExiste() throws Exception {
+        // GIVEN
+        Long id = 5L;
+        Cliente cliente = Cliente.builder().nombre("A").apellido("B").build();
+        Venta venta = Venta.builder().cliente(cliente).detalles(List.of()).build();
+        Cuota cuota = Cuota.builder().id(id).venta(venta).numeroCuota(1).montoCuota(BigDecimal.TEN).build();
+
+        when(cuotaRepository.findById(id)).thenReturn(Optional.of(cuota));
+        when(cuotaRepository.findByVentaId(any())).thenReturn(List.of(cuota));
+
+        // WHEN
+        reciboPdfService.generarReciboCuota(id);
+
+        // THEN
+        verify(cuotaRepository).findById(id);
+    }
+
+    // 4. Test para generarReciboCuota (Wrapper) - Caso Error (Excepción ID)
+    @Test
+    void generarReciboCuota_DeberiaLanzarExcepcion_CuandoIdNoExiste() {
+        // GIVEN
+        Long id = 5L;
+        when(cuotaRepository.findById(id)).thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> reciboPdfService.generarReciboCuota(id))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Cuota no encontrada con ID: " + id);
+    }
 }

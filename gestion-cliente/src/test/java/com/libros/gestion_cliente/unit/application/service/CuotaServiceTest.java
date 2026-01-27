@@ -94,4 +94,18 @@ class CuotaServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Cuota no encontrada con ID: 99");
     }
+
+    @Test
+    void buscarPorId_DeberiaLanzarExcepcion_CuandoIdNoExiste() {
+        // GIVEN
+        Long idInexistente = 99L;
+        when(cuotaRepository.findById(idInexistente)).thenReturn(java.util.Optional.empty());
+
+        // WHEN & THEN
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
+            cuotaService.buscarPorId(idInexistente);
+        });
+
+        verify(cuotaRepository).findById(idInexistente);
+    }
 }
