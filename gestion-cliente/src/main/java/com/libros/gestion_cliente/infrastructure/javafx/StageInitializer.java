@@ -19,7 +19,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     private Resource mainFxml;
 
     private final ApplicationContext applicationContext;
-    private final String applicationTitle = "Sistema de Gestión - Editorial José Hernández";
+    private final String applicationTitle = "Sistema de Gestión - FernaLibros";
 
     public StageInitializer(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
