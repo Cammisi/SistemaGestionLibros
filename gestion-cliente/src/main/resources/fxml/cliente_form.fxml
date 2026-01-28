@@ -59,7 +59,7 @@
 
         <VBox spacing="15" HBox.hgrow="ALWAYS">
             <VBox spacing="5">
-                <Label text="Intereses del Cliente" style="-fx-text-fill: #cccccc;" minWidth="-Infinity"/>
+                <Label text="Preferencias del Cliente" style="-fx-text-fill: #cccccc;" minWidth="-Infinity"/>
                 <TextArea fx:id="txtIntereses" prefRowCount="2" wrapText="true"
                           promptText="Ej: Novelas policiales, Historia..."
                           style="-fx-control-inner-background: #505050; -fx-text-fill: white;"/>
@@ -88,7 +88,7 @@
                     <ComboBox fx:id="cmbFamRelacion" prefWidth="200" style="-fx-base: #505050;"/>
                 </VBox>
                 <VBox spacing="2" HBox.hgrow="ALWAYS">
-                    <Label text="Intereses (Ej: Fútbol)" style="-fx-text-fill: #aaa; -fx-font-size: 20px; " minWidth="-Infinity"/>
+                    <Label text="Preferencias (Ej: Fútbol)" style="-fx-text-fill: #aaa; -fx-font-size: 20px; " minWidth="-Infinity"/>
                     <TextField fx:id="txtFamIntereses" style="-fx-background-color: #505050; -fx-text-fill: white;"/>
                 </VBox>
                 <Button text="+" onAction="#agregarFamiliarTabla" style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;"/>
@@ -101,7 +101,7 @@
                     <TableColumn fx:id="colFamRelacion" text="Relación" prefWidth="90" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colFamAnio" text="Año" prefWidth="60" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colFamEdad" text="Edad" prefWidth="70" style="-fx-alignment: CENTER;"/>
-                    <TableColumn fx:id="colFamIntereses" text="Intereses" prefWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colFamIntereses" text="Preferencias" prefWidth="120" style="-fx-alignment: CENTER;"/>
                 </columns>
                 <columnResizePolicy>
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
