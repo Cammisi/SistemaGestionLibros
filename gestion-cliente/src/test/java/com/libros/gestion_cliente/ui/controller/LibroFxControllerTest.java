@@ -32,11 +32,15 @@ public class LibroFxControllerTest { // <-- Le cambiamos el nombre para que no c
 
     @BeforeAll
     public static void initJavaFX() {
-        // Inicializamos el motor de JavaFX en vacío para que Maven no falle al compilar la UI
+        // Force JavaFX to run in headless mode using Monocle
+        System.setProperty("glass.platform", "Monocle");
+        System.setProperty("monocle.platform", "Headless");
+        System.setProperty("prism.order", "sw");
+
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // Si el motor ya arrancó, ignoramos la excepción
+            // Ignore if already started
         }
     }
 
