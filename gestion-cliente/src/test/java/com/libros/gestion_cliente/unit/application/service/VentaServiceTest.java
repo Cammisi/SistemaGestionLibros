@@ -267,4 +267,41 @@ class VentaServiceTest {
         Venta ventaGuardada = ventaCaptor.getValue();
         assertEquals("FAC-00001", ventaGuardada.getNroFactura(), "El número de factura debió arrancar en FAC-00001");
     }
+
+    @Test
+    void crearVenta_DeberiaManejarError_CuandoFacturaTieneFormatoCorrupto() {
+        // Arrange: Simulamos una factura que empieza con FAC- pero tiene letras en vez de números
+        Venta nuevaVenta = new Venta();
+        when(ventaRepository.findUltimoNroFactura()).thenReturn("FAC-ABCD");
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ventaService.crearVenta(nuevaVenta);
+
+        // Assert: Como falló el parseo (NumberFormatException), el sistema debe atrapar el error
+        // y reiniciar la cuenta desde 1 por seguridad.
+        ArgumentCaptor<Venta> ventaCaptor = ArgumentCaptor.forClass(Venta.class);
+        verify(ventaRepository).save(ventaCaptor.capture());
+
+        assertEquals("FAC-00001", ventaCaptor.getValue().getNroFactura(),
+                "Al fallar el parseo, debió atrapar la excepción y asignar FAC-00001");
+    }
+
+    @Test
+    void crearVenta_DeberiaIgnorarNumero_CuandoNoEmpiezaConPrefijoFac() {
+        // Arrange: Simulamos un formato viejo o distinto
+        Venta nuevaVenta = new Venta();
+        when(ventaRepository.findUltimoNroFactura()).thenReturn("Recibo_Viejo-123");
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        ventaService.crearVenta(nuevaVenta);
+
+        // Assert: El 'if' dará falso, por lo que no intentará sumar, sino que arrancará de 1
+        ArgumentCaptor<Venta> ventaCaptor = ArgumentCaptor.forClass(Venta.class);
+        verify(ventaRepository).save(ventaCaptor.capture());
+
+        assertEquals("FAC-00001", ventaCaptor.getValue().getNroFactura(),
+                "Al no tener el prefijo correcto, debió ignorarlo y asignar FAC-00001");
+    }
 }
