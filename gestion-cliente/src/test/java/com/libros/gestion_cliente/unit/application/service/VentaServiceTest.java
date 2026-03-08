@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -226,5 +228,43 @@ class VentaServiceTest {
         // Then
         // Verificamos que NUNCA se llame a guardar cuotas
         verify(cuotaRepository, never()).save(any(Cuota.class));
+    }
+
+    @Test
+    void crearVenta_DeberiaGenerarNroFacturaSecuencial_CuandoYaExistenFacturas() {
+        // Arrange
+        Venta nuevaVenta = new Venta();
+        // Simulamos que la última factura en la BD fue la 00025
+        when(ventaRepository.findUltimoNroFactura()).thenReturn("FAC-00025");
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        Venta resultado = ventaService.crearVenta(nuevaVenta);
+
+        // Assert
+        ArgumentCaptor<Venta> ventaCaptor = ArgumentCaptor.forClass(Venta.class);
+        verify(ventaRepository).save(ventaCaptor.capture());
+
+        Venta ventaGuardada = ventaCaptor.getValue();
+        assertEquals("FAC-00026", ventaGuardada.getNroFactura(), "El número de factura debió ser el siguiente en la secuencia");
+    }
+
+    @Test
+    void crearVenta_DeberiaGenerarNroFacturaInicial_CuandoNoHayFacturas() {
+        // Arrange
+        Venta nuevaVenta = new Venta();
+        // Simulamos que la base de datos está vacía
+        when(ventaRepository.findUltimoNroFactura()).thenReturn(null);
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        Venta resultado = ventaService.crearVenta(nuevaVenta);
+
+        // Assert
+        ArgumentCaptor<Venta> ventaCaptor = ArgumentCaptor.forClass(Venta.class);
+        verify(ventaRepository).save(ventaCaptor.capture());
+
+        Venta ventaGuardada = ventaCaptor.getValue();
+        assertEquals("FAC-00001", ventaGuardada.getNroFactura(), "El número de factura debió arrancar en FAC-00001");
     }
 }
