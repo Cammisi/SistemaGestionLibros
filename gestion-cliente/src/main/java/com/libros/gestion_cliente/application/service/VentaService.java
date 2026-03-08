@@ -137,4 +137,30 @@ public class VentaService {
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id")
         );
     }
+
+    public Venta crearVenta(Venta venta) {
+        // 1. Buscamos la última factura (Ej: "FAC-00025")
+        String ultimoNroCompleto = ventaRepository.findUltimoNroFactura();
+
+        long siguiente = 1;
+
+        // 2. Si existe y empieza con "FAC-", le sacamos el texto para sumar
+        if (ultimoNroCompleto != null && ultimoNroCompleto.startsWith("FAC-")) {
+            try {
+                // Recorta los primeros 4 caracteres ("FAC-") y deja solo el número
+                String soloNumero = ultimoNroCompleto.substring(4);
+                siguiente = Long.parseLong(soloNumero) + 1;
+            } catch (NumberFormatException e) {
+                // Si por algún error quedó una factura vieja corrupta, arranca de 1 (o maneja el error)
+                System.err.println("Error al parsear el número de factura: " + ultimoNroCompleto);
+            }
+        }
+
+        // 3. Volvemos a armar el string con ceros a la izquierda (Ej: "FAC-00026")
+        String nroFormateado = String.format("FAC-%05d", siguiente);
+
+        venta.setNroFactura(nroFormateado);
+
+        return ventaRepository.save(venta);
+    }
 }

@@ -40,4 +40,7 @@ public interface VentaRepository {
     // Obtener los títulos de los libros comprados por un cliente
     @Query("SELECT DISTINCT l.titulo FROM DetalleVenta dv JOIN dv.venta v JOIN dv.libro l WHERE v.cliente.id = :clienteId")
     List<String> findLibrosCompradosPorCliente(Long clienteId);
+
+    @Query("SELECT MAX(v.nroFactura) FROM Venta v")
+    String findUltimoNroFactura();
 }

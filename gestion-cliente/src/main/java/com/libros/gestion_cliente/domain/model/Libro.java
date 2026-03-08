@@ -1,10 +1,7 @@
 package com.libros.gestion_cliente.domain.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -38,7 +35,8 @@ public class Libro {
     @Builder.Default
     private Integer cantVolumenes = 1;
 
-    @NotNull
+    @NotNull(message = "El precio es obligatorio")
+    @Positive(message = "El precio debe ser mayor a cero")
     @DecimalMin("0.01")
     @Column(name = "precio_base", precision = 10, scale = 2)
     private BigDecimal precioBase; // Antes precio
