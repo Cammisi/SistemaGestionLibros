@@ -2,9 +2,6 @@ package com.libros.gestion_cliente.ui.controller;
 
 import com.libros.gestion_cliente.domain.model.Libro;
 import com.libros.gestion_cliente.domain.repository.LibroRepository;
-// Importamos tu controlador visual de JavaFX
-import com.libros.gestion_cliente.ui.controller.LibroController;
-import javafx.application.Platform;
 import javafx.scene.control.TableView;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,12 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.testfx.framework.junit5.ApplicationExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class LibroFxControllerTest { // <-- Le cambiamos el nombre para que no choque
+// ¡NUEVO! Le decimos a JUnit que esta es una prueba de aplicación JavaFX
+@ExtendWith({MockitoExtension.class, ApplicationExtension.class})
+public class LibroFxControllerTest {
 
     @Mock
     private LibroRepository libroRepository;
@@ -31,22 +30,17 @@ public class LibroFxControllerTest { // <-- Le cambiamos el nombre para que no c
     private LibroController libroController;
 
     @BeforeAll
-    public static void initJavaFX() {
-        // Force JavaFX to run in headless mode using Monocle
-        System.setProperty("glass.platform", "Monocle");
-        System.setProperty("monocle.platform", "Headless");
+    public static void setupHeadlessMode() {
+        // Configuramos TestFX para que corra en modo servidor/consola (Headless)
+        System.setProperty("testfx.robot", "glass");
+        System.setProperty("testfx.headless", "true");
         System.setProperty("prism.order", "sw");
-
-        try {
-            Platform.startup(() -> {});
-        } catch (IllegalStateException e) {
-            // Ignore if already started
-        }
+        System.setProperty("prism.text", "t2k");
+        System.setProperty("java.awt.headless", "true");
     }
 
     @BeforeEach
     public void setUp() {
-        // Inyectamos la tabla simulada al controlador para evitar NullPointerException
         ReflectionTestUtils.setField(libroController, "tablaLibros", tablaLibrosMock);
     }
 
